@@ -15,6 +15,7 @@ public:
 
 private slots:
     void on_authLoginButton_clicked();
+    void on_regButton_clicked();
 
 private:
     bool authenticated;
