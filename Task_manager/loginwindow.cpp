@@ -9,6 +9,7 @@
 LoginWindow::LoginWindow(QWidget *parent)
     : QDialog(parent)
     , authenticated(false)
+    , socket(new QTcpSocket(this))  // Инициализация сокета
 {
     // Поле логина
     QVBoxLayout *layout = new QVBoxLayout(this);
@@ -23,50 +24,70 @@ LoginWindow::LoginWindow(QWidget *parent)
     layout->addWidget(passwordLabel);
 
     passwordLineEdit = new QLineEdit(this);
-    passwordLineEdit->setEchoMode(QLineEdit::Password); //ввод пароля не виден
+    passwordLineEdit->setEchoMode(QLineEdit::Password);
     layout->addWidget(passwordLineEdit);
 
-    // Кнопка входа
+    connectionStatusLabel = new QLabel("Соединение не установлено", this);
+    layout->addWidget(connectionStatusLabel);
+
     QPushButton *authLoginButton = new QPushButton("Войти", this);
     layout->addWidget(authLoginButton);
     connect(authLoginButton, &QPushButton::clicked, this, &LoginWindow::on_authLoginButton_clicked);
+    connectToServer();
 
     // Кнопка регистрации
     QPushButton *regButton = new QPushButton("Зарегистрироваться", this);
     layout->addWidget(regButton);
     connect(regButton, &QPushButton::clicked, this, &LoginWindow::on_regButton_clicked);
-
     setLayout(layout);
 }
 
-LoginWindow::~LoginWindow()
-{
+LoginWindow::~LoginWindow() {
+    socket->disconnectFromHost();
+}
+
+void LoginWindow::sendCredentialsToServer() {
+ QString login = loginLineEdit->text();
+    QString password = passwordLineEdit->text();
+    QString credentials = login + ":" + password;
+
+    if (socket->state() == QAbstractSocket::ConnectedState) {
+        socket->write(credentials.toUtf8() + "\n");
+    }
 }
 
 // Нажатие на кнопку для перехода к окну регистрации
 void LoginWindow::on_regButton_clicked()
 {
     RegistrationWindow *registerWindow = new RegistrationWindow(this);
-
     registerWindow->show(); // Отображается поверх оккна логина, можно потом пофиксить
 }
 
-bool LoginWindow::isAuthenticated() const
-{
-    return authenticated;
+void LoginWindow::on_authLoginButton_clicked() {
+    sendCredentialsToServer();
+    if (socket->waitForReadyRead(3000)) {
+        QString response = QString::fromUtf8(socket->readAll()).trimmed();
+        if (response == "AUTH_SUCCESS") {
+            authenticated = true;
+            accept();  // Закрываем окно и разрешаем доступ
+        } else if (response == "AUTH_FAILED") {
+            QMessageBox::warning(this, "Ошибка", "Неверный логин или пароль");
+        } else {
+            QMessageBox::warning(this, "Ошибка", "Некорректный ответ от сервера");
+        }
+    } else {
+        QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера");
+    }
 }
 
-// Проверка логина и пароля
-void LoginWindow::on_authLoginButton_clicked()
-{
-    QString login = loginLineEdit->text();
-    QString password = passwordLineEdit->text();
+void LoginWindow::connectToServer() {
+    QString serverIp = "192.168.1.147";
+    int serverPort = 45561;
+    socket->connectToHost(serverIp, serverPort);
+    if (socket->waitForConnected(3000)) {
+        connectionStatusLabel->setText("Подключено к серверу " + serverIp + ":" + QString::number(serverPort));
 
-    // Текущие логин и пароль для входа 111 и 111
-    if (login == "111" && password == "111") {
-        authenticated = true;
-        accept();
     } else {
-        QMessageBox::warning(this, "Ошибка", "Неверный логин или пароль");
+        connectionStatusLabel->setText("Не удалось подключиться к серверу");
     }
 }
