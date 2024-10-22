@@ -19,6 +19,8 @@ private slots:
     void connectToServer();
     void on_authLoginButton_clicked();
     void sendCredentialsToServer();
+    void on_regButton_clicked();
+
 
 private:
     bool authenticated;

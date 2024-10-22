@@ -1,4 +1,5 @@
 #include "loginwindow.h"
+#include "registrationwindow.h"
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -10,6 +11,7 @@ LoginWindow::LoginWindow(QWidget *parent)
     , authenticated(false)
     , socket(new QTcpSocket(this))  // Инициализация сокета
 {
+    // Поле логина
     QVBoxLayout *layout = new QVBoxLayout(this);
     QLabel *loginLabel = new QLabel("Логин:", this);
     layout->addWidget(loginLabel);
@@ -17,6 +19,7 @@ LoginWindow::LoginWindow(QWidget *parent)
     loginLineEdit = new QLineEdit(this);
     layout->addWidget(loginLineEdit);
 
+    // Поле пароля
     QLabel *passwordLabel = new QLabel("Пароль:", this);
     layout->addWidget(passwordLabel);
 
@@ -31,6 +34,11 @@ LoginWindow::LoginWindow(QWidget *parent)
     layout->addWidget(authLoginButton);
     connect(authLoginButton, &QPushButton::clicked, this, &LoginWindow::on_authLoginButton_clicked);
     connectToServer();
+
+    // Кнопка регистрации
+    QPushButton *regButton = new QPushButton("Зарегистрироваться", this);
+    layout->addWidget(regButton);
+    connect(regButton, &QPushButton::clicked, this, &LoginWindow::on_regButton_clicked);
     setLayout(layout);
 }
 
@@ -39,13 +47,20 @@ LoginWindow::~LoginWindow() {
 }
 
 void LoginWindow::sendCredentialsToServer() {
-    QString login = loginLineEdit->text();
+ QString login = loginLineEdit->text();
     QString password = passwordLineEdit->text();
     QString credentials = login + ":" + password;
 
     if (socket->state() == QAbstractSocket::ConnectedState) {
         socket->write(credentials.toUtf8() + "\n");
     }
+}
+
+// Нажатие на кнопку для перехода к окну регистрации
+void LoginWindow::on_regButton_clicked()
+{
+    RegistrationWindow *registerWindow = new RegistrationWindow(this);
+    registerWindow->show(); // Отображается поверх оккна логина, можно потом пофиксить
 }
 
 void LoginWindow::on_authLoginButton_clicked() {
@@ -68,10 +83,10 @@ void LoginWindow::on_authLoginButton_clicked() {
 void LoginWindow::connectToServer() {
     QString serverIp = "192.168.1.147";
     int serverPort = 45561;
-
     socket->connectToHost(serverIp, serverPort);
     if (socket->waitForConnected(3000)) {
         connectionStatusLabel->setText("Подключено к серверу " + serverIp + ":" + QString::number(serverPort));
+
     } else {
         connectionStatusLabel->setText("Не удалось подключиться к серверу");
     }
