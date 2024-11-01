@@ -51,7 +51,7 @@ private slots:
 
 private:
     QScrollArea *scrollArea; // Указатель на QScrollArea
-    QVBoxLayout *taskLayout; // Layout для хранения задач
+    QVBoxLayout *tasksLayout; // Layout для хранения задач
     QVBoxLayout *centerStripeLayout; // Вертикальный слой для центральной полосы
 };
 
