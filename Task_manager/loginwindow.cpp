@@ -30,6 +30,11 @@ LoginWindow::LoginWindow(QWidget *parent)
     QPushButton *authLoginButton = new QPushButton("Войти", this);
     layout->addWidget(authLoginButton);
     connect(authLoginButton, &QPushButton::clicked, this, &LoginWindow::on_authLoginButton_clicked);
+
+    QPushButton *registerButton = new QPushButton("Зарегистрироваться", this);
+    layout->addWidget(registerButton);
+    connect(registerButton, &QPushButton::clicked, this, &LoginWindow::on_registerButton_clicked);
+
     connectToServer();
     setLayout(layout);
 }
@@ -41,7 +46,17 @@ LoginWindow::~LoginWindow() {
 void LoginWindow::sendCredentialsToServer() {
     QString login = loginLineEdit->text();
     QString password = passwordLineEdit->text();
-    QString credentials = login + ":" + password;
+    QString credentials = "LOGIN:" + login + ":" + password;
+
+    if (socket->state() == QAbstractSocket::ConnectedState) {
+        socket->write(credentials.toUtf8() + "\n");
+    }
+}
+
+void LoginWindow::registerUser() {
+    QString login = loginLineEdit->text();
+    QString password = passwordLineEdit->text();
+    QString credentials = "REGISTER:" + login + ":" + password;
 
     if (socket->state() == QAbstractSocket::ConnectedState) {
         socket->write(credentials.toUtf8() + "\n");
@@ -65,9 +80,23 @@ void LoginWindow::on_authLoginButton_clicked() {
     }
 }
 
+void LoginWindow::on_registerButton_clicked() {
+    registerUser();
+    if (socket->waitForReadyRead(3000)) {
+        QString response = QString::fromUtf8(socket->readAll()).trimmed();
+        if (response == "REGISTER_SUCCESS") {
+            QMessageBox::information(this, "Регистрация", "Регистрация прошла успешно");
+        } else {
+            QMessageBox::warning(this, "Ошибка", "Регистрация не удалась");
+        }
+    } else {
+        QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера");
+    }
+}
+
 void LoginWindow::connectToServer() {
-    QString serverIp = "192.168.1.147";
-    int serverPort = 45561;
+    QString serverIp = "localhost";
+    int serverPort = 8000;
 
     socket->connectToHost(serverIp, serverPort);
     if (socket->waitForConnected(3000)) {

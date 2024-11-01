@@ -13,19 +13,17 @@ public:
     explicit LoginWindow(QWidget *parent = nullptr);
     ~LoginWindow();
 
-//    bool isAuthenticated() const;
-
 private slots:
     void connectToServer();
     void on_authLoginButton_clicked();
     void sendCredentialsToServer();
+    void registerUser(); // Новый слот для регистрации
+    void on_registerButton_clicked(); // Новый слот для обработки нажатия на кнопку регистрации
 
 private:
     bool authenticated;
-    QLineEdit *loginLineEdit;     // Declare login line edit
-    QLineEdit *passwordLineEdit;  // Declare password line edit
-    QTcpSocket *socket;  // Добавляем сокет
+    QLineEdit *loginLineEdit; // Поле ввода логина
+    QLineEdit *passwordLineEdit; // Поле ввода пароля
+    QTcpSocket *socket; // Сокет для связи с сервером
     QLabel *connectionStatusLabel; // Метка для отображения состояния подключения
 };
-
-
