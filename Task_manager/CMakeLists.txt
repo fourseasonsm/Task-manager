@@ -28,6 +28,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         mainwindow.h
         mainwindow.ui
         registrationwindow.h registrationwindow.cpp registrationwindow.ui
+        task.h task.cpp
 
     )
 # Define target properties for Android with Qt 6 as:

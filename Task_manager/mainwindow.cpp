@@ -1,4 +1,9 @@
 #include "mainwindow.h"
+#include <QMessageBox>
+#include <QVBoxLayout>
+#include <QPushButton>
+#include <QLineEdit>
+#include <QLabel>
 
 MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
     setWindowTitle("Main Window");
@@ -31,21 +36,42 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
 
     // Текст "Профиль"
     QLabel *overlay_prf = new QLabel("Профиль", bottomLeftStripe);
-    overlay_prf->setStyleSheet("background-color: transparent; color: black; font-size: 16px;");
+    overlay_prf->setStyleSheet("background-color: transparent; color: black; font-weight: bold; font-size: 19px;");
     leftStripeLayout->addWidget(overlay_prf, 0, Qt::AlignTop | Qt::AlignHCenter);
 
-    // Белая центральная полоса
-    QLabel *bottomCenterStripe = new QLabel(this);
-    bottomCenterStripe->setStyleSheet("background-color: white;");
-    bottomCenterStripe->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-    bottomLayout->addWidget(bottomCenterStripe);
 
-    QVBoxLayout *centerStripeLayout = new QVBoxLayout(bottomCenterStripe); // Вертикальный слой для центральной полосы
+    // Белая центральная полоса с прокруткой
+    QScrollArea *scrollArea = new QScrollArea(this);
+    scrollArea->setWidgetResizable(true); // Автоматическая подстройка размера
+    scrollArea->setStyleSheet("background-color: white;");
+
+    // Внутренний виджет для области прокрутки
+    QWidget *scrollContent = new QWidget();
+    QVBoxLayout *centerStripeLayout = new QVBoxLayout(scrollContent); // Вертикальный слой для центральной полосы
+
 
     // Текст "Текущие задачи"
-    QLabel *overlay_tsk = new QLabel("Текущие задачи", bottomCenterStripe);
-    overlay_tsk->setStyleSheet("background-color: transparent; color: black; font-size: 16px;");
+    QLabel *overlay_tsk = new QLabel("Текущие задачи", scrollContent);
+    overlay_tsk->setStyleSheet("background-color: transparent; color: black; font-weight: bold; font-size: 19px;");
     centerStripeLayout->addWidget(overlay_tsk, 0, Qt::AlignTop | Qt::AlignLeft);
+
+    // Контейнер для задач
+    tasksLayout = new QVBoxLayout(); // Создаем новый вертикальный слой для задач
+    centerStripeLayout->addLayout(tasksLayout); // Добавляем контейнер задач
+
+    // Кнопка создания новой задачи
+    QPushButton *newTaskButton = new QPushButton("+", this);
+    newTaskButton->setFixedSize(40, 40);
+    newTaskButton->setStyleSheet("background-color: #6495ed; color: white; font-size: 18px; border-radius: 20px;");
+    centerStripeLayout->addWidget(newTaskButton, 0, Qt::AlignBottom | Qt::AlignRight);
+
+    // Добавляем контент в QScrollArea
+    scrollArea->setWidget(scrollContent);
+    bottomLayout->addWidget(scrollArea);
+
+    // Подключаем сигнал нажатия кнопки к слоту добавления новой задачи
+    connect(newTaskButton, &QPushButton::clicked, this, &MainWindow::createNewTask);
+
 
     // Зеленая полоса справа
     QLabel *bottomRightStripe = new QLabel(this);
@@ -57,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
 
     // Текст "Пользователи онлайн"
     QLabel *overlay_usr = new QLabel("Пользователи онлайн", bottomRightStripe);
-    overlay_usr->setStyleSheet("background-color: transparent; color: black; font-size: 16px;");
+    overlay_usr->setStyleSheet("background-color: transparent; color: black; font-weight: bold; font-size: 19px;");
     rightStripeLayout->addWidget(overlay_usr, 0, Qt::AlignTop | Qt::AlignHCenter);
 
     // Устанавливаем размеры полос
@@ -67,6 +93,13 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
     mainLayout->addLayout(bottomLayout);
 
     setLayout(mainLayout); // Устанавливаем главный слой для окна
+}
+
+
+// Слот для создания новой задачи
+void MainWindow::createNewTask() {
+    Task *newTask = new Task("Новая задача", "Описание задачи", this);
+    tasksLayout->addWidget(newTask); // Добавляем новую задачу в tasksLayout
 }
 
 
