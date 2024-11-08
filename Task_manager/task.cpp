@@ -29,6 +29,7 @@
 
 
 #include "task.h"
+#include "taskwindow.h"
 #include <QVBoxLayout>
 #include <QLineEdit>
 #include <QPushButton>
@@ -41,7 +42,7 @@ Task::Task(const QString &title, const QString &description, QWidget *parent)
     // Создание рамки для обведения полей
     QFrame *frame = new QFrame(this);
     frame->setFrameShape(QFrame::StyledPanel); // Устанавливаем стиль рамки
-    frame->setStyleSheet("border: 2px solid gray;"); // Устанавливаем цвет и толщину рамки
+    frame->setStyleSheet("border: 2px solid #3b4f2a; padding: 10px;"); // Устанавливаем цвет и толщину рамки
 
     QVBoxLayout *frameLayout = new QVBoxLayout(frame); // Вертикальный слой внутри рамки
 
@@ -55,16 +56,42 @@ Task::Task(const QString &title, const QString &description, QWidget *parent)
     descriptionEdit->setStyleSheet("color: black; background-color: white; font-size: 14px;");
     frameLayout->addWidget(descriptionEdit);
 
+    // Горизонтальный слой для кнопки "Выполнить"
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    buttonLayout->addStretch(); // Заполнитель слева для выравнивания кнопки вправо
+
+    // Кнопка открытия задачи
+    openButton = new QPushButton("Открыть", this);
+    openButton->setFixedSize(100, 40); // Размер кнопки
+    openButton->setStyleSheet("background-color: green; color: white;");
+    layout->addWidget(frame); // Добавляем рамку с полями
+    buttonLayout->addWidget(openButton); // Кнопка выполнения
+
     // Кнопка выполнения
     doneButton = new QPushButton("Выполнить", this);
+    doneButton->setFixedSize(100, 40); // Размер кнопки
     doneButton->setStyleSheet("background-color: green; color: white;");
     layout->addWidget(frame); // Добавляем рамку с полями
-    frameLayout->addWidget(doneButton); // Кнопка выполнения
+    buttonLayout->addWidget(doneButton); // Кнопка выполнения
+
+    // Добавляем компоновку кнопки в компоновку рамки
+    frameLayout->addLayout(buttonLayout);
+
+    // Добавляем рамку в главный слой
+    layout->addWidget(frame);
 
     connect(doneButton, &QPushButton::clicked, this, &Task::markAsDone);
+    connect(openButton, &QPushButton::clicked, this, &Task::openTask);
 }
 
 void Task::markAsDone() {
     this->deleteLater(); // Удаляем задачу
+}
+
+void Task::openTask() {
+
+    TaskWindow *taskWindow = new TaskWindow(this);
+
+    taskWindow->show();
 }
 

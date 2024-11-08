@@ -5,6 +5,10 @@
 #include <QLineEdit>
 #include <QLabel>
 
+
+// Цвета: Средний зеленый -  #a7bfa5, светлый зеленый - #e1f0db, темный зеленый - #3b4f2a
+
+
 MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
     setWindowTitle("Main Window");
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
@@ -21,14 +25,14 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
     separator->setFrameShape(QFrame::HLine);
     separator->setFrameShadow(QFrame::Sunken);
     separator->setLineWidth(2);
-    separator->setStyleSheet("color: black;");
+    separator->setStyleSheet("color: #3b4f2a;");
     mainLayout->addWidget(separator);
 
     QHBoxLayout *bottomLayout = new QHBoxLayout(); // Горизонтальный слой
 
     // Зеленая полоса слева
     QLabel *bottomLeftStripe = new QLabel(this);
-    bottomLeftStripe->setStyleSheet("background-color: lightgreen;");
+    bottomLeftStripe->setStyleSheet("background-color: #a7bfa5;");
     bottomLeftStripe->setAlignment(Qt::AlignTop | Qt::AlignCenter);
     bottomLayout->addWidget(bottomLeftStripe);
 
@@ -43,7 +47,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
     // Белая центральная полоса с прокруткой
     QScrollArea *scrollArea = new QScrollArea(this);
     scrollArea->setWidgetResizable(true); // Автоматическая подстройка размера
-    scrollArea->setStyleSheet("background-color: white;");
+    scrollArea->setStyleSheet("background-color: #e1f0db;");
 
     // Внутренний виджет для области прокрутки
     QWidget *scrollContent = new QWidget();
@@ -62,7 +66,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
     // Кнопка создания новой задачи
     QPushButton *newTaskButton = new QPushButton("+", this);
     newTaskButton->setFixedSize(40, 40);
-    newTaskButton->setStyleSheet("background-color: #6495ed; color: white; font-size: 18px; border-radius: 20px;");
+    newTaskButton->setStyleSheet("background-color: #3b4f2a; color: white; font-size: 18px; border-radius: 20px;");
     centerStripeLayout->addWidget(newTaskButton, 0, Qt::AlignBottom | Qt::AlignRight);
 
     // Добавляем контент в QScrollArea
@@ -75,7 +79,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
 
     // Зеленая полоса справа
     QLabel *bottomRightStripe = new QLabel(this);
-    bottomRightStripe->setStyleSheet("background-color: lightgreen;");
+    bottomRightStripe->setStyleSheet("background-color: #a7bfa5;");
     bottomRightStripe->setAlignment(Qt::AlignTop | Qt::AlignCenter);
     bottomLayout->addWidget(bottomRightStripe);
 
