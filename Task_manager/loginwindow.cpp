@@ -47,19 +47,23 @@ LoginWindow::~LoginWindow() {
 }
 
 void LoginWindow::sendCredentialsToServer() {
- QString login = loginLineEdit->text();
+    QString login = loginLineEdit->text();
     QString password = passwordLineEdit->text();
-    QString credentials = login + ":" + password;
+    QString credentials = "LOGIN:" + login + ":" + password;
 
     if (socket->state() == QAbstractSocket::ConnectedState) {
         socket->write(credentials.toUtf8() + "\n");
     }
 }
 
+QTcpSocket* LoginWindow::getSocket() {
+    return socket;
+}
+
 // Нажатие на кнопку для перехода к окну регистрации
 void LoginWindow::on_regButton_clicked()
 {
-    RegistrationWindow *registerWindow = new RegistrationWindow(this);
+    registerWindow = new RegistrationWindow(this, getSocket());  // Передаем сокет
     registerWindow->show(); // Отображается поверх оккна логина, можно потом пофиксить
 }
 
@@ -81,8 +85,8 @@ void LoginWindow::on_authLoginButton_clicked() {
 }
 
 void LoginWindow::connectToServer() {
-    QString serverIp = "192.168.1.147";
-    int serverPort = 45561;
+    QString serverIp = "localhost";
+    int serverPort = 8000;
     socket->connectToHost(serverIp, serverPort);
     if (socket->waitForConnected(3000)) {
         connectionStatusLabel->setText("Подключено к серверу " + serverIp + ":" + QString::number(serverPort));
