@@ -25,7 +25,7 @@ private:
 private slots:
     void readMessage();
     void clientDisconnected();
-    void registerUser(QTcpSocket *clientSocket, const QString &login, const QString &password); // Новый слот для регистрации
+    void registerUser(QTcpSocket *clientSocket, const QString &login, const QString &email, const QString &password); // Новый слот для регистрации
     void authenticateUser(QTcpSocket *clientSocket, const QString &login, const QString &password); // Новый слот для авторизации
 };
 

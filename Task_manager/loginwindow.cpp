@@ -33,11 +33,6 @@ LoginWindow::LoginWindow(QWidget *parent)
     QPushButton *authLoginButton = new QPushButton("Войти", this);
     layout->addWidget(authLoginButton);
     connect(authLoginButton, &QPushButton::clicked, this, &LoginWindow::on_authLoginButton_clicked);
-
-    QPushButton *registerButton = new QPushButton("Зарегистрироваться", this);
-    layout->addWidget(registerButton);
-    connect(registerButton, &QPushButton::clicked, this, &LoginWindow::on_registerButton_clicked);
-
     connectToServer();
 
     // Кнопка регистрации
@@ -52,7 +47,7 @@ LoginWindow::~LoginWindow() {
 }
 
 void LoginWindow::sendCredentialsToServer() {
- QString login = loginLineEdit->text();
+    QString login = loginLineEdit->text();
     QString password = passwordLineEdit->text();
     QString credentials = "LOGIN:" + login + ":" + password;
 
@@ -61,20 +56,14 @@ void LoginWindow::sendCredentialsToServer() {
     }
 }
 
-void LoginWindow::registerUser() {
-    QString login = loginLineEdit->text();
-    QString password = passwordLineEdit->text();
-    QString credentials = "REGISTER:" + login + ":" + password;
-
-    if (socket->state() == QAbstractSocket::ConnectedState) {
-        socket->write(credentials.toUtf8() + "\n");
-    }
+QTcpSocket* LoginWindow::getSocket() {
+    return socket;
 }
 
 // Нажатие на кнопку для перехода к окну регистрации
 void LoginWindow::on_regButton_clicked()
 {
-    RegistrationWindow *registerWindow = new RegistrationWindow(this);
+    registerWindow = new RegistrationWindow(this, getSocket());  // Передаем сокет
     registerWindow->show(); // Отображается поверх оккна логина, можно потом пофиксить
 }
 
@@ -95,24 +84,9 @@ void LoginWindow::on_authLoginButton_clicked() {
     }
 }
 
-void LoginWindow::on_registerButton_clicked() {
-    registerUser();
-    if (socket->waitForReadyRead(3000)) {
-        QString response = QString::fromUtf8(socket->readAll()).trimmed();
-        if (response == "REGISTER_SUCCESS") {
-            QMessageBox::information(this, "Регистрация", "Регистрация прошла успешно");
-        } else {
-            QMessageBox::warning(this, "Ошибка", "Регистрация не удалась");
-        }
-    } else {
-        QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера");
-    }
-}
-
 void LoginWindow::connectToServer() {
     QString serverIp = "localhost";
     int serverPort = 8000;
-    
     socket->connectToHost(serverIp, serverPort);
     if (socket->waitForConnected(3000)) {
         connectionStatusLabel->setText("Подключено к серверу " + serverIp + ":" + QString::number(serverPort));

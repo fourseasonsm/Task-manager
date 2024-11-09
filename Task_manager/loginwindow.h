@@ -4,6 +4,7 @@
 #include <QLineEdit>
 #include <QLabel>
 #include <QTcpSocket>
+#include "registrationwindow.h"
 
 class LoginWindow : public QDialog
 {
@@ -12,18 +13,22 @@ class LoginWindow : public QDialog
 public:
     explicit LoginWindow(QWidget *parent = nullptr);
     ~LoginWindow();
+    QTcpSocket* getSocket();  // Метод для получения сокета
 
 private slots:
     void connectToServer();
     void on_authLoginButton_clicked();
     void sendCredentialsToServer();
-    void registerUser(); // Новый слот для регистрации
-    void on_registerButton_clicked(); // Новый слот для обработки нажатия на кнопку регистрации
+    void on_regButton_clicked();
+
 
 private:
     bool authenticated;
-    QLineEdit *loginLineEdit; // Поле ввода логина
-    QLineEdit *passwordLineEdit; // Поле ввода пароля
-    QTcpSocket *socket; // Сокет для связи с сервером
+    QLineEdit *loginLineEdit;     // Declare login line edit
+    QLineEdit *passwordLineEdit;  // Declare password line edit
+    QTcpSocket *socket;  // Добавляем сокет
+    RegistrationWindow *registerWindow;
     QLabel *connectionStatusLabel; // Метка для отображения состояния подключения
 };
+
+

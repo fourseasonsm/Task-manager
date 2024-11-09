@@ -57,11 +57,13 @@ void ChatServer::readMessage() {
 
         QString command = parts[0];
         QString login = parts[1];
-        QString password = parts[2];
 
         if (command == "REGISTER") {
-            registerUser(clientSocket, login, password);
+            QString email = parts[2];
+            QString password = parts[3];
+            registerUser(clientSocket, login, email, password);
         } else if (command == "LOGIN") {
+            QString password = parts[2];
             authenticateUser(clientSocket, login, password);
         } else {
             clientSocket->write("UNKNOWN_COMMAND\n");
@@ -69,10 +71,11 @@ void ChatServer::readMessage() {
     }
 }
 
-void ChatServer::registerUser(QTcpSocket *clientSocket, const QString &login, const QString &password) {
+void ChatServer::registerUser(QTcpSocket *clientSocket, const QString &login, const QString &email, const QString &password) {
     QSqlQuery query;
-    query.prepare("INSERT INTO users (login, password) VALUES (:login, :password)");
+    query.prepare("INSERT INTO users (login, email, password) VALUES (:login, :email, :password)");
     query.bindValue(":login", login);
+    query.bindValue(":email", email);
     query.bindValue(":password", password);
 
     if (query.exec()) {
