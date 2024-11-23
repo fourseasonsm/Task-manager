@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
+<<<<<<< HEAD
 <!-- Written by QtCreator 13.0.1, 2024-11-19T16:52:41. -->
+=======
+<!-- Written by QtCreator 9.0.2, 2024-11-09T03:19:33. -->
+>>>>>>> de6eec12417335b64cafc028f5d82ba561aeb9fa
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -385,6 +389,7 @@
     <valuelist type="QVariantList" key="CustomOutputParsers"/>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
+<<<<<<< HEAD
     <value type="bool" key="PE.EnvironmentAspect.PrintOnRun">false</value>
     <value type="QString" key="PerfRecordArgsId">-e cpu-cycles --call-graph &quot;dwarf,4096&quot; -F 250</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">Server</value>
@@ -395,6 +400,17 @@
     <value type="bool" key="RunConfiguration.UseLibrarySearchPath">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory.default">C:/prog/task/Task-manager/Server/build/Desktop_Qt_shared_MinGW_w64_MINGW64_MSYS2-Debug</value>
+=======
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">Server</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">CMakeProjectManager.CMakeRunConfiguration.Server</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">Server</value>
+    <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
+    <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
+    <value type="bool" key="RunConfiguration.UseLibrarySearchPath">true</value>
+    <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
+    <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/nik/Task-manager/build-Server-Desktop-Debug</value>
+>>>>>>> de6eec12417335b64cafc028f5d82ba561aeb9fa
    </valuemap>
    <value type="qlonglong" key="ProjectExplorer.Target.RunConfigurationCount">1</value>
   </valuemap>
