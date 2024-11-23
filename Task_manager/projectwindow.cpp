@@ -1,6 +1,6 @@
-#include "taskwindow.h"
-#include "task.h"
-#include "ui_taskwindow.h"
+#include "projectwindow.h"
+#include "project.h"
+#include "ui_projectwindow.h"
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -8,10 +8,10 @@
 #include <QLabel>
 
 
-TaskWindow::TaskWindow(QWidget *parent)
+ProjectWindow::ProjectWindow(QWidget *parent)
     : QDialog(parent)
 {
-    setWindowTitle("Новая задача"); // Позже изменить
+    setWindowTitle("Новый проект"); // Позже изменить
     resize(800, 400);
     QVBoxLayout *taskLayout = new QVBoxLayout(this);
 
@@ -25,7 +25,7 @@ TaskWindow::TaskWindow(QWidget *parent)
     QHBoxLayout *headerLayout = new QHBoxLayout(taskTopPart); // Горизонтальный слой
 
     // Название проекта
-    QLabel *title = new QLabel("Новая задача", this);
+    QLabel *title = new QLabel("Новый проект", this);
     title->setStyleSheet("background-color: transparent; color: black; font-weight: bold; font-size: 25px;");
     headerLayout->addWidget(title);
 
@@ -41,12 +41,12 @@ TaskWindow::TaskWindow(QWidget *parent)
     taskLayout->addWidget(taskSeparator);
 
     // Текст "Описание задачи"
-    QLabel *description_tsk = new QLabel("Описание задачи");
+    QLabel *description_tsk = new QLabel("Описание проекта");
     description_tsk->setStyleSheet("background-color: transparent; color: black; font-size: 15px;");
     taskLayout->addWidget(description_tsk, 0, Qt::AlignTop | Qt::AlignLeft);
 
 }
 
-TaskWindow::~TaskWindow()
+ProjectWindow::~ProjectWindow()
 {
 }
