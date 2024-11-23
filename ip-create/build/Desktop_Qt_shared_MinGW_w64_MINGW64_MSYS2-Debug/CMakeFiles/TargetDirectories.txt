@@ -1,0 +1,5 @@
+C:/prog/task/Task-manager/ip-create/build/Desktop_Qt_shared_MinGW_w64_MINGW64_MSYS2-Debug/CMakeFiles/fortune_server.dir
+C:/prog/task/Task-manager/ip-create/build/Desktop_Qt_shared_MinGW_w64_MINGW64_MSYS2-Debug/CMakeFiles/edit_cache.dir
+C:/prog/task/Task-manager/ip-create/build/Desktop_Qt_shared_MinGW_w64_MINGW64_MSYS2-Debug/CMakeFiles/rebuild_cache.dir
+C:/prog/task/Task-manager/ip-create/build/Desktop_Qt_shared_MinGW_w64_MINGW64_MSYS2-Debug/CMakeFiles/fortune_server_autogen_timestamp_deps.dir
+C:/prog/task/Task-manager/ip-create/build/Desktop_Qt_shared_MinGW_w64_MINGW64_MSYS2-Debug/CMakeFiles/fortune_server_autogen.dir

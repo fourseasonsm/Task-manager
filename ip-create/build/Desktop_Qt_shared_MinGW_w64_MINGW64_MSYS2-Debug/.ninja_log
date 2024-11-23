@@ -1,0 +1,22 @@
+# ninja log v6
+10	953	7512917767527355	fortune_server_autogen/timestamp	79c530effb698bd
+10	953	7512917767527355	fortune_server_autogen/mocs_compilation.cpp	79c530effb698bd
+10	953	7512917767527355	C:/prog/task/Task-manager/ip-create/build/Desktop_Qt_shared_MinGW_w64_MINGW64_MSYS2-Debug/fortune_server_autogen/timestamp	79c530effb698bd
+10	953	7512917767527355	C:/prog/task/Task-manager/ip-create/build/Desktop_Qt_shared_MinGW_w64_MINGW64_MSYS2-Debug/fortune_server_autogen/mocs_compilation.cpp	79c530effb698bd
+1028	3401	7512917769988654	CMakeFiles/fortune_server.dir/C_/Program_Files/msys2/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QICNSPlugin_Import.cpp.obj	6f4ca6c42c8dc059
+1013	3464	7512917769832448	CMakeFiles/fortune_server.dir/C_/Program_Files/msys2/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QGifPlugin_Import.cpp.obj	616931e541ea5748
+960	3581	7512917769363714	CMakeFiles/fortune_server.dir/fortune_server_autogen/mocs_compilation.cpp.obj	4ddf81cd36f45468
+974	3645	7512917769520060	CMakeFiles/fortune_server.dir/main.cpp.obj	e6ba005a1e21d93a
+1057	3874	7512917770301118	CMakeFiles/fortune_server.dir/C_/Program_Files/msys2/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QICOPlugin_Import.cpp.obj	19d49f295ceaf03
+1081	3951	7512917770532104	CMakeFiles/fortune_server.dir/C_/Program_Files/msys2/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QJpegPlugin_Import.cpp.obj	e7688bc48445ea20
+1154	3984	7512917771313333	CMakeFiles/fortune_server.dir/C_/Program_Files/msys2/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QSvgPlugin_Import.cpp.obj	acee7044d4ba1745
+1139	4014	7512917771157097	CMakeFiles/fortune_server.dir/C_/Program_Files/msys2/mingw64/qt5-static/lib/cmake/Qt5Widgets/Qt5Widgets_QWindowsVistaStylePlugin_Import.cpp.obj	b858054a4ed9114a
+1111	4064	7512917770844678	CMakeFiles/fortune_server.dir/C_/Program_Files/msys2/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QSvgIconPlugin_Import.cpp.obj	2e1893699056a023
+3402	5753	7512917793850061	CMakeFiles/fortune_server.dir/C_/Program_Files/msys2/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QTgaPlugin_Import.cpp.obj	d75062602c93894d
+3465	5765	7512917794475339	CMakeFiles/fortune_server.dir/C_/Program_Files/msys2/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QTiffPlugin_Import.cpp.obj	1bae5cc8623dac49
+3581	5805	7512917795636931	CMakeFiles/fortune_server.dir/C_/Program_Files/msys2/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QWbmpPlugin_Import.cpp.obj	4caa88458e16e3bd
+3645	5925	7512917796278852	CMakeFiles/fortune_server.dir/C_/Program_Files/msys2/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QWebpPlugin_Import.cpp.obj	3b61007697fb068
+3874	6024	7512917798568479	CMakeFiles/fortune_server.dir/C_/Program_Files/msys2/mingw64/qt5-static/lib/cmake/Qt5Gui/Qt5Gui_QWindowsIntegrationPlugin_Import.cpp.obj	e61008b437148086
+3951	6105	7512917799338784	CMakeFiles/fortune_server.dir/C_/Program_Files/msys2/mingw64/qt5-static/lib/cmake/Qt5Network/Qt5Network_QGenericEnginePlugin_Import.cpp.obj	fce66655adf5bdbe
+987	10332	7512917769676230	CMakeFiles/fortune_server.dir/server.cpp.obj	894adb9ff7d477f3
+10337	13389	7512917863150414	fortune_server.exe	b5d84889b51a232e

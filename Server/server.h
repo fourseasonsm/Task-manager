@@ -19,7 +19,7 @@ protected:
 private:
 private:
     QList<QTcpSocket*> clients;   // Список подключенных клиентов
-    QHash<QString, QString> validUsers;  // Хранилище логинов и паролей (логин -> пароль)
+    QHash<QString, QString> validUsers ;  // Хранилище логинов и паролей (логин -> пароль)
 
 private slots:
     void readMessage();

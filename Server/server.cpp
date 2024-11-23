@@ -4,18 +4,29 @@
 #include <QCoreApplication>
 #include <QTextStream>
 #include <QList>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
 
 ChatServer::ChatServer(QObject *parent) : QTcpServer(parent) {
-    // Логины и пароли
-    validUsers.insert("111", "111");
-    validUsers.insert("admin", "admin123");
+    // подключение к базе
+    QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL");
+    db.setHostName("localhost"); //адрес моего сервера PostgreSQL
+    db.setDatabaseName("task_manager"); // название базы
+    db.setUserName("postgres"); // тут я указала свое имя пользователя для этой базы
+    db.setPassword("password"); //пароль не указывала потому что хз как это запустить
+
+    if (!db.open()) {
+        qDebug() << "Не удалось подключиться к базе данных:" << db.lastError().text();
+    }
 }
+
 void ChatServer::startServer() {
     QHostAddress serverAddress("192.168.1.147"); // Указываем IP-адрес
     quint16 port = 45561; // Указываем порт
 
     if (listen(serverAddress, port)) {
-        qDebug() << "Сервер запущен на" << serverAddress.toString() << "порт" << port;
+        qDebug() << "Сервер запущен на" << serverAddress.toString() << ", порт: " << port;
     } else {
         qDebug() << "Не удалось запустить сервер!";
     }
@@ -44,14 +55,28 @@ void ChatServer::readMessage() {
             QString login = credentials[0];
             QString password = credentials[1];
 
-            // Проверка на валидность логина и пароля
-            if (validUsers.contains(login) && validUsers.value(login) == password) {
-                clientSocket->write("AUTH_SUCCESS\n");
+            //ищем логин пароль в базе
+            QSqlQuery query;
+            query.prepare("SELECT password FROM users WHERE login = :login");
+            query.bindValue(":login", login);
+            if (!query.exec()) {
+                qDebug() << "Ошибка выполнения запроса:" << query.lastError().text();
+                clientSocket->write("AUTH_FAILEDn");
+                return;
+            }
+
+            if (query.next()) {
+                QString storedPassword = query.value(0).toString();
+                if (storedPassword == password) {
+                    clientSocket->write("AUTH_SUCCESSn");
+                } else {
+                    clientSocket->write("AUTH_FAILEDn");
+                }
             } else {
-                clientSocket->write("AUTH_FAILED\n");
+                clientSocket->write("AUTH_FAILEDn");
             }
         } else {
-            clientSocket->write("INVALID_FORMAT\n");
+            clientSocket->write("INVALID_FORMATn");
         }
     }
 }

@@ -4,6 +4,13 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QLabel>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QUrl>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QMessageBox>
 
 LoginWindow::LoginWindow(QWidget *parent)
     : QDialog(parent)
@@ -49,25 +56,45 @@ void LoginWindow::sendCredentialsToServer() {
 }
 
 void LoginWindow::on_authLoginButton_clicked() {
-    sendCredentialsToServer();
-    if (socket->waitForReadyRead(3000)) {
-        QString response = QString::fromUtf8(socket->readAll()).trimmed();
-        if (response == "AUTH_SUCCESS") {
-            authenticated = true;
-            accept();  // Закрываем окно и разрешаем доступ
-        } else if (response == "AUTH_FAILED") {
-            QMessageBox::warning(this, "Ошибка", "Неверный логин или пароль");
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QUrl url("http://localhost:8080"); // Замените на ваш URL
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    // Создаем JSON объект с данными для авторизации
+    QJsonObject json;
+    json["action"] = "login"; // Указываем действие
+    json["username"] = loginLineEdit->text(); // Замените на ваше поле логина
+    json["password"] = passwordLineEdit->text(); // Замените на ваше поле пароля
+
+    // Отправляем POST запрос
+    QNetworkReply *reply = manager->post(request, QJsonDocument(json).toJson());
+
+    // Обрабатываем ответ
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            QString response = QString::fromUtf8(reply->readAll()).trimmed();
+            QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+            QJsonObject jsonObject = jsonResponse.object();
+
+            // Проверяем сообщение от сервера
+            QString message = jsonObject["message"].toString();
+            if (message == "Login successful!") {
+                authenticated = true;
+                accept();  // Закрываем окно и разрешаем доступ
+            } else {
+                QMessageBox::warning(this, "Ошибка", message);
+            }
         } else {
-            QMessageBox::warning(this, "Ошибка", "Некорректный ответ от сервера");
+            QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
         }
-    } else {
-        QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера");
-    }
+        reply->deleteLater(); // Освобождаем память
+    });
 }
 
 void LoginWindow::connectToServer() {
-    QString serverIp = "192.168.1.147";
-    int serverPort = 45561;
+    QString serverIp = "localhost";
+    int serverPort = 51138;
 
     socket->connectToHost(serverIp, serverPort);
     if (socket->waitForConnected(3000)) {

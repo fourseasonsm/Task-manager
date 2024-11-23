@@ -9,19 +9,20 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-find_package(Qt5 COMPONENTS Core Gui Widgets Network REQUIRED)
+
+# Изменено: добавлен модуль Sql
+find_package(Qt5 COMPONENTS Core Gui Widgets Network Sql REQUIRED)
 
 include_directories(
     .
 )
 
-set (SRCS
+set(SRCS
     main.cpp
     server.cpp
     server.h
 )
 
-
 add_executable(${CMAKE_PROJECT_NAME} ${SRCS})
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network Qt5::Sql)
