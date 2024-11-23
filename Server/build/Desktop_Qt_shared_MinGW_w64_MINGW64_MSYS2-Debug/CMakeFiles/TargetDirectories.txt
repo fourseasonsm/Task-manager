@@ -1,5 +1,0 @@
-C:/prog/task/Task-manager/Server/build/Desktop_Qt_shared_MinGW_w64_MINGW64_MSYS2-Debug/CMakeFiles/Server.dir
-C:/prog/task/Task-manager/Server/build/Desktop_Qt_shared_MinGW_w64_MINGW64_MSYS2-Debug/CMakeFiles/edit_cache.dir
-C:/prog/task/Task-manager/Server/build/Desktop_Qt_shared_MinGW_w64_MINGW64_MSYS2-Debug/CMakeFiles/rebuild_cache.dir
-C:/prog/task/Task-manager/Server/build/Desktop_Qt_shared_MinGW_w64_MINGW64_MSYS2-Debug/CMakeFiles/Server_autogen_timestamp_deps.dir
-C:/prog/task/Task-manager/Server/build/Desktop_Qt_shared_MinGW_w64_MINGW64_MSYS2-Debug/CMakeFiles/Server_autogen.dir
