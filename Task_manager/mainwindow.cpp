@@ -1,24 +1,81 @@
 #include "mainwindow.h"
+#include "loginwindow.h"
+#include "registrationwindow.h"
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QLineEdit>
 #include <QLabel>
+#include <QListWidget>
 
 
 // Цвета: Средний зеленый -  #a7bfa5, светлый зеленый - #e1f0db, темный зеленый - #3b4f2a
 
 
-MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
+MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrollArea(this)) {
     setWindowTitle("Main Window");
+    resize(1200, 700);
+
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
     // Белая шапка
     QLabel *topPart = new QLabel();
     topPart->setStyleSheet("background-color: white;");
-    topPart->setFixedHeight(50);
+    topPart->setFixedHeight(60);
     topPart->setAlignment(Qt::AlignCenter);
     mainLayout->addWidget(topPart);
+
+    QHBoxLayout *headerLayout = new QHBoxLayout(topPart); // Горизонтальный слой
+
+    // Стиль кнопок
+    QString buttonStyle = "background-color: #3b4f2a; color: white; font-weight: bold; outline: none; border: none; border-radius: 5px; padding: 10px;";
+
+    // Кнопка создания задачи
+    QPushButton *newTaskButton = new QPushButton("Создать задачу", this);
+    newTaskButton->setFixedSize(120, 35);
+    newTaskButton->setStyleSheet(buttonStyle);
+
+    headerLayout->addWidget(newTaskButton, 0, Qt::AlignLeft);
+    connect(newTaskButton, &QPushButton::clicked, this, &MainWindow::createNewTask);
+
+    // Кнопка создания проекта
+    QPushButton *newProjectButton = new QPushButton("Создать проект", this);
+    newProjectButton->setFixedSize(120, 35);
+    newProjectButton->setStyleSheet(buttonStyle);
+
+    headerLayout->addWidget(newProjectButton, 0, Qt::AlignLeft);
+    connect(newProjectButton, &QPushButton::clicked, this, &MainWindow::createNewProject);
+
+    // Добавляем пустое пространство слева для выравнивания
+    headerLayout->addStretch(1);
+
+    // Название проекта Task Manager
+    QLabel *title = new QLabel("Task Manager", this);
+    title->setStyleSheet("background-color: transparent; color: black; font-weight: bold; font-size: 30px;");
+    headerLayout->addWidget(title);
+
+    // Добавляем пустое пространство справа для выравнивания
+    headerLayout->addStretch(1);
+
+    // Кнопка входа
+    QPushButton *authLoginButton = new QPushButton("Войти", this);
+    authLoginButton->setFixedSize(100, 35);
+    authLoginButton->setStyleSheet(buttonStyle);
+    // addShadowEffect(authLoginButton); // Добавляем тень
+
+    headerLayout->addWidget(authLoginButton, 0, Qt::AlignRight);
+    connect(authLoginButton, &QPushButton::clicked, this, &MainWindow::on_authLoginButton_clicked);
+
+    // Кнопка регистрации
+    QPushButton *regButton = new QPushButton("Зарегистрироваться", this);
+    regButton->setFixedSize(150, 35);
+    regButton->setStyleSheet(buttonStyle);
+    // addShadowEffect(regButton); // Добавляем тень
+
+    headerLayout->addWidget(regButton, 0, Qt::AlignRight);
+    connect(regButton, &QPushButton::clicked, this, &MainWindow::on_regButton_clicked);
+
+
 
     // Разделитель
     QFrame *separator = new QFrame();
@@ -27,6 +84,10 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
     separator->setLineWidth(2);
     separator->setStyleSheet("color: #3b4f2a;");
     mainLayout->addWidget(separator);
+
+
+
+
 
     QHBoxLayout *bottomLayout = new QHBoxLayout(); // Горизонтальный слой
 
@@ -43,8 +104,21 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
     overlay_prf->setStyleSheet("background-color: transparent; color: black; font-weight: bold; font-size: 19px;");
     leftStripeLayout->addWidget(overlay_prf, 0, Qt::AlignTop | Qt::AlignHCenter);
 
+    // Отступ
+    leftStripeLayout->addSpacing(30);
 
-    // Белая центральная полоса с прокруткой
+    // Имя пользователя
+    QLabel *user_name = new QLabel("Имя пользователя", bottomLeftStripe);
+    user_name->setStyleSheet("color: black; font-size: 20px; text-decoration: underline;");
+    leftStripeLayout->addWidget(user_name, 0, Qt::AlignTop | Qt::AlignHCenter);
+
+    // Добавляем пустое пространство, чтобы элементы располагались сверху
+    leftStripeLayout->addSpacerItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
+
+
+
+
+    // Светло-зеленая центральная полоса с прокруткой
     QScrollArea *scrollArea = new QScrollArea(this);
     scrollArea->setWidgetResizable(true); // Автоматическая подстройка размера
     scrollArea->setStyleSheet("background-color: #e1f0db;");
@@ -63,18 +137,14 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
     tasksLayout = new QVBoxLayout(); // Создаем новый вертикальный слой для задач
     centerStripeLayout->addLayout(tasksLayout); // Добавляем контейнер задач
 
-    // Кнопка создания новой задачи
-    QPushButton *newTaskButton = new QPushButton("+", this);
-    newTaskButton->setFixedSize(40, 40);
-    newTaskButton->setStyleSheet("background-color: #3b4f2a; color: white; font-size: 18px; border-radius: 20px;");
-    centerStripeLayout->addWidget(newTaskButton, 0, Qt::AlignBottom | Qt::AlignRight);
-
     // Добавляем контент в QScrollArea
     scrollArea->setWidget(scrollContent);
     bottomLayout->addWidget(scrollArea);
 
-    // Подключаем сигнал нажатия кнопки к слоту добавления новой задачи
-    connect(newTaskButton, &QPushButton::clicked, this, &MainWindow::createNewTask);
+    // Добавляем пустое пространство, чтобы элементы располагались сверху
+    centerStripeLayout->addSpacerItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
+
+
 
 
     // Зеленая полоса справа
@@ -90,6 +160,37 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
     overlay_usr->setStyleSheet("background-color: transparent; color: black; font-weight: bold; font-size: 19px;");
     rightStripeLayout->addWidget(overlay_usr, 0, Qt::AlignTop | Qt::AlignHCenter);
 
+    // Отступ
+    rightStripeLayout->addSpacing(30);
+
+    // Поле для пользователей онлайн
+    QLabel *usersBox = new QLabel(bottomRightStripe);
+    usersBox->setStyleSheet("background-color: #e1f0db;");
+    usersBox->setFixedSize(200, 300);
+    rightStripeLayout->addWidget(usersBox, 0, Qt::AlignTop | Qt::AlignHCenter);
+
+    // Слой для пользователей онлайн
+    QVBoxLayout *usersBoxLayout = new QVBoxLayout(usersBox);
+
+    // Список пользователей онлайн
+    QListWidget *usersList = new QListWidget(usersBox);
+    usersList->setStyleSheet("background-color: #e1f0db; color: black; font-size: 18px");
+    usersList->setFixedSize(200, 300);
+
+    usersList->addItem("Рената");
+    usersList->addItem("Саша");
+    usersList->addItem("Никита");
+    usersList->addItem("Артем");
+
+    // Добавляем в слой
+    usersBoxLayout->addWidget(usersList, 0, Qt::AlignTop | Qt::AlignHCenter);
+
+    // Добавляем пустое пространство, чтобы элементы располагались сверху
+    rightStripeLayout->addSpacerItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
+
+
+
+
     // Устанавливаем размеры полос
     bottomLayout->setStretch(0, 2); // Зелёная полоса слева
     bottomLayout->setStretch(1, 5); // Белая центральная полоса
@@ -103,7 +204,34 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent) {
 // Слот для создания новой задачи
 void MainWindow::createNewTask() {
     Task *newTask = new Task("Новая задача", "Описание задачи", this);
-    tasksLayout->addWidget(newTask); // Добавляем новую задачу в tasksLayout
+
+    tasksLayout->addWidget(newTask);
+
+    // Центрируем все задачи по верхнему краю контейнера
+    tasksLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
 }
 
+// Слот для создания нового проекта
+void MainWindow::createNewProject() {
+    Project *newProject = new Project("Новый проект", "Описание проекта", this);
+
+    tasksLayout->addWidget(newProject);
+
+    // Центрируем все проекты по верхнему краю контейнера
+    tasksLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
+}
+
+// Нажатие на кнопку для перехода к окну регистрации
+void MainWindow::on_authLoginButton_clicked()
+{
+    LoginWindow *loginWindow = new LoginWindow(this);
+    loginWindow->show(); // Отображается поверх окна логина, можно потом пофиксить
+}
+
+// Нажатие на кнопку для перехода к окну регистрации
+void MainWindow::on_regButton_clicked()
+{
+    RegistrationWindow *registerWindow = new RegistrationWindow(this);
+    registerWindow->show(); // Отображается поверх окна логина, можно потом пофиксить
+}
 

@@ -13,7 +13,10 @@ class LoginWindow : public QDialog
 public:
     explicit LoginWindow(QWidget *parent = nullptr);
     ~LoginWindow();
+
     QTcpSocket* getSocket();  // Метод для получения сокета
+
+    static void addShadowEffect(QWidget *widget);
 
 private slots:
     void connectToServer();
