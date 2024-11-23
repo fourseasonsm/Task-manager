@@ -6,16 +6,20 @@
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    QApplication app(argc, argv);
 
-    LoginWindow loginWindow;
-    if (loginWindow.exec() == QDialog::Accepted) {
-        MainWindow mainWindow;
-        mainWindow.resize(700, 500);
-        mainWindow.show(); // Или используйте exec(), если нужно модальное окно
+    MainWindow mainWindow;
+    mainWindow.show();
 
-        return a.exec(); // Запустите основной цикл событий
-    }
+
+    // LoginWindow loginWindow;
+    // if (loginWindow.exec() == QDialog::Accepted) {
+    //     MainWindow mainWindow;
+    //     mainWindow.resize(700, 500);
+    //     mainWindow.show(); // Или используйте exec(), если нужно модальное окно
+
+    //     return a.exec(); // Запустите основной цикл событий
+    // }
 
     // Если убрать комм, при попытке перейти к окну регистрации все окна закрываютя :(
 
@@ -27,5 +31,5 @@ int main(int argc, char *argv[])
     //     return a.exec();
     // }
 
-    return 0;
+    return app.exec();
 }

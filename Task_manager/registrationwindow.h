@@ -14,6 +14,8 @@ class RegistrationWindow : public QDialog
 public:
     explicit RegistrationWindow(QWidget *parent = nullptr, QTcpSocket *existingSocket = nullptr);
 
+    static void addShadowEffect(QWidget *widget);
+
 private slots:
     void on_registerButton_clicked(); // Слот для обработки нажатия кнопки регистрации
     void registerUser(); // Новый слот для регистрации
