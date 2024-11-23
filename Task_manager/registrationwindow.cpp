@@ -6,6 +6,13 @@
 #include <QLineEdit>
 #include <QLabel>
 
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QUrl>
+#include <QJsonDocument>
+#include <QJsonObject>
+
 RegistrationWindow::RegistrationWindow(QWidget *parent, QTcpSocket *existingSocket)
     : QDialog(parent), socket(existingSocket)  // Инициализация переданным сокетом
 {
@@ -95,17 +102,39 @@ void RegistrationWindow::addShadowEffect(QWidget *widget) {
 }
 
 void RegistrationWindow::on_registerButton_clicked() {
-    registerUser();
-    if (socket->waitForReadyRead(3000)) {
-        QString response = QString::fromUtf8(socket->readAll()).trimmed();
-        if (response == "REGISTER_SUCCESS") {
-            QMessageBox::information(this, "Регистрация", "Регистрация прошла успешно");
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QUrl url("http://localhost:8080"); // Замените на ваш URL
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    // Создаем JSON объект с данными для авторизации
+    QJsonObject json;
+    json["action"] = "register"; // Указываем действие
+    json["username"] = loginEdit->text(); // Замените на ваше поле логина
+    json["password"] = passwordEdit->text(); // Замените на ваше поле пароля
+
+    // Отправляем POST запрос
+    QNetworkReply *reply = manager->post(request, QJsonDocument(json).toJson());
+
+    // Обрабатываем ответ
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            QString response = QString::fromUtf8(reply->readAll()).trimmed();
+            QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+            QJsonObject jsonObject = jsonResponse.object();
+
+            // Проверяем сообщение от сервера
+            QString message = jsonObject["message"].toString();
+            if (message == "Registration successful!") {
+                QMessageBox::information(this, "Регистрация", "Регистрация прошла успешно");
+            } else {
+                 QMessageBox::warning(this, "Ошибка", "Регистрация не удалась");
+            }
         } else {
-            QMessageBox::warning(this, "Ошибка", "Регистрация не удалась");
+            QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
         }
-    } else {
-        QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера");
-    }
+        reply->deleteLater(); // Освобождаем память
+    });
 }
 
 void RegistrationWindow::registerUser() {
