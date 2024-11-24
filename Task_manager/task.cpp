@@ -2,10 +2,11 @@
 #include "taskwindow.h"
 #include <QVBoxLayout>
 #include <QLineEdit>
+#include <QTextEdit>
 #include <QPushButton>
 #include <QFrame>
 
-Task::Task(const QString &title, const QString &description, QWidget *parent)
+Task::Task(QWidget *parent)
     : QWidget(parent) {
 
     QVBoxLayout *layout = new QVBoxLayout(this);
@@ -24,21 +25,23 @@ Task::Task(const QString &title, const QString &description, QWidget *parent)
     QString buttonStyle = "background-color: #3b4f2a; color: white; outline: none; border: none; border-radius: 5px; padding: 10px;";
 
     // Отступ сверху
-    taskBoxLayout->addSpacing(15);
+    taskBoxLayout->addSpacing(5);
 
     // Поле ввода названия задачи
-    titleEdit = new QLineEdit(title, this);
+    titleEdit = new QLineEdit(this);
     titleEdit->setStyleSheet(lineEditStyle + "font-weight: bold;");
     titleEdit->setFixedHeight(40);
+    titleEdit->setPlaceholderText("Название задачи");
     taskBoxLayout->addWidget(titleEdit);
 
     // Отступ
-    taskBoxLayout->addSpacing(15);
+    taskBoxLayout->addSpacing(5);
 
     // Поле ввода описания задачи
-    descriptionEdit = new QLineEdit(description, this);
+    descriptionEdit = new QTextEdit(this);
     descriptionEdit->setStyleSheet(lineEditStyle);
-    descriptionEdit->setFixedHeight(30);
+    descriptionEdit->setFixedHeight(60);
+    descriptionEdit->setPlaceholderText("Описание задачи");
     taskBoxLayout->addWidget(descriptionEdit);
 
     // Горизонтальный слой для кнопки "Выполнить"
@@ -57,13 +60,19 @@ Task::Task(const QString &title, const QString &description, QWidget *parent)
     doneButton->setStyleSheet(buttonStyle);
     buttonLayout->addWidget(doneButton);
 
+    // Кнопка сохранения
+    saveButton = new QPushButton("Сохранить", this);
+    saveButton->setFixedSize(100, 40);
+    saveButton->setStyleSheet(buttonStyle);
+    buttonLayout->addWidget(saveButton);
+
     // Добавляем компоновку кнопок в рамку
     taskBoxLayout->addLayout(buttonLayout);
 
     // Добавляем рамку в главный слой
     layout->addWidget(taskBox);
 
-    setMinimumSize(400, 250); // Устанавливаем минимальный размер окна
+    setMinimumSize(400, 200); // Устанавливаем минимальный размер окна
 
     connect(doneButton, &QPushButton::clicked, this, &Task::markAsDone);
     connect(openButton, &QPushButton::clicked, this, &Task::openTask);
@@ -78,5 +87,9 @@ void Task::openTask() {
     TaskWindow *taskWindow = new TaskWindow(this);
 
     taskWindow->show();
+}
+
+void Task::saveTask() {
+
 }
 

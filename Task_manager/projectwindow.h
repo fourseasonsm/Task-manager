@@ -2,6 +2,7 @@
 #define PROJECTWINDOW_H
 
 #include <QDialog>
+#include <QLabel>
 
 class ProjectWindow : public QDialog
 {
@@ -10,6 +11,9 @@ class ProjectWindow : public QDialog
 public:
     explicit ProjectWindow(QWidget *parent = nullptr);
     ~ProjectWindow();
+
+public slots:
+
 
 private:
 
