@@ -112,7 +112,7 @@ void RegistrationWindow::on_registerButton_clicked() {
     json["action"] = "register"; // Указываем действие
     json["login"] = loginEdit->text(); // Замените на ваше поле логина
     json["password"] = passwordEdit->text(); // Замените на ваше поле пароля
-
+    json["email"] = emailEdit->text();
     // Отправляем POST запрос
     QNetworkReply *reply = manager->post(request, QJsonDocument(json).toJson());
 

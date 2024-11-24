@@ -52,6 +52,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             action = data.get('action')
             login = data.get('login')
             password = data.get('password')
+            email = data.get('email')
+
         except json.JSONDecodeError:
             self.send_response(400)  # Bad Request
             self.wfile.write(json.dumps({'error': 'Invalid JSON'}).encode('utf-8'))
@@ -59,7 +61,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
         # Обработка действий
         if action == 'register':
-            response = self.handle_register(login, password)
+            response = self.handle_register(login, password, email)
         elif action == 'login':
             response = self.handle_login(login, password)
         elif action == 'status':
@@ -73,7 +75,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
         self.wfile.write(json.dumps(response).encode('utf-8'))
 
-    def handle_register(self, login, password):
+    def handle_register(self, login, password, email):
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
@@ -82,7 +84,12 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 return {
                     'message': 'Ошибка регистрации, такой логин уже существует'
                 }
-            cursor.execute("INSERT INTO users (login, password) VALUES (%s, %s)", (login, password))
+            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))  # Исправленный запрос
+            if cursor.fetchone():
+                return {
+                    'message': 'Ошибка регистрации, пользователь с такой почтой уже существует'
+                }
+            cursor.execute("INSERT INTO users (login, password, email) VALUES (%s, %s, %s)", (login, password, email))
             connect.commit()
             cursor.close()
             connect.close()
