@@ -20,12 +20,15 @@ private slots:
     void openProject(); // Слот для открытия задачи в окне
     void onInviteButtonClicked(); // Слот для приглашения пользователя
     void textChanged(); // Слот для изменения цвета веса подзадачи
+    void saveProject(); // Слот для сохранения задачи
 
 private:
     QLineEdit *titleEdit; // Поле для редактирования названия
     QTextEdit *descriptionEdit; // Поле для редактирования описания
     QPushButton *doneButton; // Кнопка для пометки задачи выполненной
     QPushButton *openButton; // Кнопка для открытия задачи в окне
+    QPushButton *saveButton; // Кнопка для сохранения проекта
+
     QPushButton *subTaskButton; // Кнопка для добавления подзадачи
     QVBoxLayout *subTasksLayout; // Компоновка в виджете проекта
     QLineEdit subTaskWeight;

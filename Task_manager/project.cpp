@@ -86,6 +86,12 @@ Project::Project(QWidget *parent)
     doneButton->setStyleSheet(buttonStyle);
     buttonLayout->addWidget(doneButton);
 
+    // Кнопка сохранения
+    saveButton = new QPushButton("Сохранить", this);
+    saveButton->setFixedSize(100, 40);
+    saveButton->setStyleSheet(buttonStyle);
+    buttonLayout->addWidget(saveButton);
+
     // Добавляем компоновку кнопок в рамку
     projectBoxLayout->addLayout(buttonLayout);
 
@@ -111,6 +117,10 @@ void Project::openProject() {
     ProjectWindow *projectWindow = new ProjectWindow(this);
 
     projectWindow->show();
+}
+
+void Project::saveProject() {
+
 }
 
 void Project::addSubTask() {
