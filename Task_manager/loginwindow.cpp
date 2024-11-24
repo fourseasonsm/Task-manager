@@ -147,7 +147,7 @@ void LoginWindow::on_authLoginButton_clicked() {
     // Создаем JSON объект с данными для авторизации
     QJsonObject json;
     json["action"] = "login"; // Указываем действие
-    json["username"] = loginLineEdit->text(); // Замените на ваше поле логина
+    json["login"] = loginLineEdit->text(); // Замените на ваше поле логина
     json["password"] = passwordLineEdit->text(); // Замените на ваше поле пароля
 
     // Преобразуем JSON объект в документ и выводим его в консоль для отладки

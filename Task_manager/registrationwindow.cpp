@@ -110,7 +110,7 @@ void RegistrationWindow::on_registerButton_clicked() {
     // Создаем JSON объект с данными для авторизации
     QJsonObject json;
     json["action"] = "register"; // Указываем действие
-    json["username"] = loginEdit->text(); // Замените на ваше поле логина
+    json["login"] = loginEdit->text(); // Замените на ваше поле логина
     json["password"] = passwordEdit->text(); // Замените на ваше поле пароля
 
     // Отправляем POST запрос

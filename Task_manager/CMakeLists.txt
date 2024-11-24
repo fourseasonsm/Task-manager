@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.0)
 
 project(Task_manager VERSION 0.1 LANGUAGES CXX)
 
@@ -18,6 +18,14 @@ set(PROJECT_SOURCES
         loginwindow.cpp
         loginwindow.h
         loginwindow.ui
+        mainwindow.cpp
+        mainwindow.h
+        mainwindow.ui
+        registrationwindow.h registrationwindow.cpp registrationwindow.ui
+        task.h task.cpp
+        taskwindow.h taskwindow.cpp taskwindow.ui
+        project.h project.cpp
+        projectwindow.h projectwindow.cpp projectwindow.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
