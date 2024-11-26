@@ -50,3 +50,5 @@ ProjectWindow::ProjectWindow(QWidget *parent)
 ProjectWindow::~ProjectWindow()
 {
 }
+
+

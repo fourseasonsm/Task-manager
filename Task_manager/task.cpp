@@ -2,6 +2,7 @@
 #include "taskwindow.h"
 #include <QVBoxLayout>
 #include <QLineEdit>
+#include <QTextEdit>
 #include <QPushButton>
 #include <QFrame>
 #include <QNetworkAccessManager>
@@ -12,7 +13,10 @@
 #include <QJsonObject>
 #include <QMessageBox>
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 3e5b479e3ae9c1bf002c0abb067916dd0fedb16c
 Task::Task(QWidget *parent)
     : QWidget(parent) {
 
@@ -142,6 +146,7 @@ void Task::openTask() {
 }
 
 void Task::saveTask() {
+<<<<<<< HEAD
     // Проверка на пустые поля
     if (titleEdit->text().isEmpty() || descriptionEdit->placeholderText().isEmpty()) {
         QMessageBox::warning(this, "Ошибка", "Название и описание не могут быть пустыми");
@@ -189,5 +194,8 @@ void Task::saveTask() {
     connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
         QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
     });
+=======
+
+>>>>>>> 3e5b479e3ae9c1bf002c0abb067916dd0fedb16c
 }
 

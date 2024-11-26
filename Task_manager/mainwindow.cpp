@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "loginwindow.h"
 #include "registrationwindow.h"
+#include "projectwindow.h"
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -211,7 +212,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
 
 // Слот для создания новой задачи
 void MainWindow::createNewTask() {
-    Task *newTask = new Task("Новая задача", "Описание задачи", this);
+    Task *newTask = new Task(this);
 
     tasksLayout->addWidget(newTask);
 
@@ -221,7 +222,7 @@ void MainWindow::createNewTask() {
 
 // Слот для создания нового проекта
 void MainWindow::createNewProject() {
-    Project *newProject = new Project("Новый проект", "Описание проекта", this);
+    Project *newProject = new Project(this);
 
     tasksLayout->addWidget(newProject);
 
