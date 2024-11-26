@@ -152,7 +152,6 @@ void LoginWindow::on_authLoginButton_clicked() {
 
     // Преобразуем JSON объект в документ и выводим его в консоль для отладки
     QJsonDocument jsonDoc(json);
-    qDebug() << "Sending JSON:" << jsonDoc.toJson();
 
     // Отправляем POST запрос
     QNetworkReply *reply = manager->post(request, jsonDoc.toJson());

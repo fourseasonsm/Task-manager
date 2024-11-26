@@ -7,6 +7,14 @@
 #include <QLineEdit>
 #include <QLabel>
 #include <QListWidget>
+#include "task.h"
+#include "taskwindow.h"
+#include <QVBoxLayout>
+#include <QLineEdit>
+#include <QTextEdit>
+#include <QPushButton>
+#include <QFrame>
+
 
 
 // Цвета: Средний зеленый -  #a7bfa5, светлый зеленый - #e1f0db, темный зеленый - #3b4f2a
