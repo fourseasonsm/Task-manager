@@ -111,7 +111,6 @@ Project::Project(QWidget *parent)
 void Project::markAsDone() {
     this->deleteLater(); // Удаляем задачу
 }
-
 void Project::openProject() {
 
     ProjectWindow *projectWindow = new ProjectWindow(this);

@@ -8,7 +8,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-class Project : public QWidget {
+    class Project : public QWidget {
     Q_OBJECT
 
 public:

@@ -5,6 +5,14 @@
 #include <QTextEdit>
 #include <QPushButton>
 #include <QFrame>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QUrl>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QMessageBox>
+
 
 Task::Task(QWidget *parent)
     : QWidget(parent) {
@@ -76,10 +84,56 @@ Task::Task(QWidget *parent)
 
     connect(doneButton, &QPushButton::clicked, this, &Task::markAsDone);
     connect(openButton, &QPushButton::clicked, this, &Task::openTask);
+    connect(saveButton, &QPushButton::clicked, this, &Task::saveTask);
 }
 
 void Task::markAsDone() {
-    this->deleteLater(); // Удаляем задачу
+    // Проверка на пустые поля
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QUrl url("http://localhost:8079"); // Замените на ваш URL
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    // Создаем JSON объект с данными для авторизации
+    QJsonObject json;
+    json["action"] = "destruction";
+    json["task_name"] = titleEdit->text(); // Указываем название задачи
+    json["task_text"] = descriptionEdit->placeholderText(); // Указываем название задачи
+    // Преобразуем JSON объект в документ и выводим его в консоль для отладки
+    QJsonDocument jsonDoc(json);
+
+    // Отправляем POST запрос
+    QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+
+    // Обрабатываем ответ
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            QString response = QString::fromUtf8(reply->readAll()).trimmed();
+            QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+            QJsonObject jsonObject = jsonResponse.object();
+
+            // Проверяем сообщение от сервера
+            QString message = jsonObject["message"].toString();
+            if (message == "Destruction successful!") {
+                QMessageBox::information(this, "Задача удалена", message);
+            } else {
+                QMessageBox::warning(this, "Ошибка при удалении задачи", message);
+            }
+        } else {
+            QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
+        }
+        reply->deleteLater(); // Освобождаем память
+        this->deleteLater();
+    });
+
+    // Обрабатываем ошибки сети
+    connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
+        QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
+        this->deleteLater();
+    });
+    TaskWindow *taskWindow = new TaskWindow(this);
+
+    taskWindow->show(); // Удаляем задачу
 }
 
 void Task::openTask() {
@@ -90,6 +144,52 @@ void Task::openTask() {
 }
 
 void Task::saveTask() {
+    // Проверка на пустые поля
+    if (titleEdit->text().isEmpty() || descriptionEdit->placeholderText().isEmpty()) {
+        QMessageBox::warning(this, "Ошибка", "Название и описание не могут быть пустыми");
+        return;
+    }
 
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QUrl url("http://localhost:8079"); // Замените на ваш URL
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    // Создаем JSON объект с данными для авторизации
+    QJsonObject json;
+    json["action"] = "creation";
+    json["task_name"] = titleEdit->text(); // Указываем название задачи
+    json["task_text"] = descriptionEdit->placeholderText(); // Указываем название задачи
+
+    // Преобразуем JSON объект в документ и выводим его в консоль для отладки
+    QJsonDocument jsonDoc(json);
+
+    // Отправляем POST запрос
+    QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+
+    // Обрабатываем ответ
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            QString response = QString::fromUtf8(reply->readAll()).trimmed();
+            QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+            QJsonObject jsonObject = jsonResponse.object();
+
+            // Проверяем сообщение от сервера
+            QString message = jsonObject["message"].toString();
+            if (message == "Task creation successful!") {
+                QMessageBox::information(this, "Задача сохранена", message);
+            } else {
+                QMessageBox::warning(this, "Ошибка при сохранении задачи", message);
+            }
+        } else {
+            QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
+        }
+        reply->deleteLater(); // Освобождаем память
+    });
+
+    // Обрабатываем ошибки сети
+    connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
+        QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
+    });
 }
 
