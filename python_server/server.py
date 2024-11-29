@@ -9,7 +9,7 @@ def connecting_to_database():
         port='5432',
         database='server_database',
         user='postgres',
-        password='miumiau'
+        password=''
     )
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -103,6 +103,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             return {
                 'message': 'Регистрация не завершена, ошибка транзакции'
             }
+            
 
     def handle_login(self, login, password):
         try:
@@ -124,6 +125,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             return {
                 'message': 'Вход не выполнен, ошибка транзакции'
             }
+
 
 def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, port=8080):
     server_address = ('', port)
