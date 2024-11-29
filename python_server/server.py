@@ -1,15 +1,22 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import psycopg2
+import hashlib
+
+# Функция для распределения по серверам
+def assign_server(user_identifier, servers):
+
+    hash_value = int(hashlib.md5(user_identifier.encode()).hexdigest(), 16)
+    return servers[hash_value % len(servers)]
 
 # подключение через функцию, глобальная переменная выдает кучу ошибок которые я не хочу чинить
 def connecting_to_database():
     return psycopg2.connect(
         host='127.0.0.1',
         port='5432',
-        database='server_database',
+        database='task_manager',
         user='postgres',
-        password=''
+        password='miumiau'
     )
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -103,7 +110,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             return {
                 'message': 'Регистрация не завершена, ошибка транзакции'
             }
-            
 
     def handle_login(self, login, password):
         try:
@@ -111,21 +117,24 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             cursor = connect.cursor()
             cursor.execute("SELECT * FROM users WHERE login = %s AND password = %s", (login, password))
             if cursor.fetchone():
+                # Распределение по серверам
+                servers = [
+                    {'host': '127.0.0.1', 'port': 8079},
+                    {'host': '127.0.0.1', 'port': 8081},
+                    {'host': '127.0.0.1', 'port': 8082},
+                ]
+                assigned_server = assign_server(login, servers)
                 return {
-                    'message': 'Login successful!', #менять нельзя, обрабатывается в клиенте
-                    'login': login
+                    'message': 'Login successful!',
+                    'login': login,
+                    'server': assigned_server
                 }
             else:
-                return {
-                    'message': 'Неправильный логин или пароль'
-                }
+                return {'message': 'Неправильный логин или пароль'}
         except Exception as e:
-            connect.rollback()  # Отменяем транзакцию если она кривая
-            print(f"Возникла ошибка связанная с базой данных: {e}")
-            return {
-                'message': 'Вход не выполнен, ошибка транзакции'
-            }
-
+            connect.rollback()
+            print(f"Ошибка базы данных: {e}")
+            return {'message': 'Вход не выполнен, ошибка транзакции'}
 
 def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, port=8080):
     server_address = ('', port)
