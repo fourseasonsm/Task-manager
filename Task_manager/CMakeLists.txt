@@ -41,6 +41,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         project.h project.cpp
         projectwindow.h projectwindow.cpp projectwindow.ui
 
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET Task_manager APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

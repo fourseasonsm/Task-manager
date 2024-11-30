@@ -6,7 +6,6 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QLabel>
-
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -138,7 +137,7 @@ void LoginWindow::on_authLoginButton_clicked() {
         QMessageBox::warning(this, "Ошибка", "Логин и пароль не могут быть пустыми");
         return;
     }
-
+    user_login_global =loginLineEdit->text();
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
     QUrl url("http://localhost:8080"); // Замените на ваш URL
     QNetworkRequest request(url);

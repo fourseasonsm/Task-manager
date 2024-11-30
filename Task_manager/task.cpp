@@ -131,9 +131,6 @@ void Task::markAsDone() {
         QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
         this->deleteLater();
     });
-    TaskWindow *taskWindow = new TaskWindow(this);
-
-    taskWindow->show(); // Удаляем задачу
 }
 
 void Task::openTask() {
