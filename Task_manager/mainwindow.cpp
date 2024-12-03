@@ -2,14 +2,15 @@
 #include "loginwindow.h"
 #include "registrationwindow.h"
 #include "projectwindow.h"
+#include "task.h"
+#include "taskwindow.h"
+
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QLineEdit>
 #include <QLabel>
 #include <QListWidget>
-#include "task.h"
-#include "taskwindow.h"
 #include <QVBoxLayout>
 #include <QTextEdit>
 #include <QPushButton>
@@ -265,7 +266,8 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
 
 // Слот для создания новой задачи
 void MainWindow::createNewTask() {
-    Task *newTask = new Task(this);
+    //создаем член класса от адреса сервера
+    Task *newTask = new Task(smallServerUrl,this);
 
     tasksLayout->addWidget(newTask);
 
@@ -287,7 +289,10 @@ void MainWindow::createNewProject() {
 void MainWindow::on_authLoginButton_clicked()
 {
     LoginWindow *loginWindow = new LoginWindow(this);
-    loginWindow->show(); // Отображается поверх окна логина, можно потом пофиксить
+    //по сути то же самое, что show, только с show геттер не работает
+    if (loginWindow->exec() == QDialog::Accepted) {
+        smallServerUrl = loginWindow->getSmallServerUrl();
+    }
 }
 
 // Нажатие на кнопку для перехода к окну регистрации

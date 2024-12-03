@@ -1,5 +1,6 @@
 #include "loginwindow.h"
 #include "registrationwindow.h"
+
 #include <QGraphicsDropShadowEffect>
 #include <QMessageBox>
 #include <QVBoxLayout>
@@ -166,6 +167,13 @@ void LoginWindow::on_authLoginButton_clicked() {
             QString message = jsonObject["message"].toString();
             if (message == "Login successful!") {
                 authenticated = true;
+                // Сохраняем адрес и порт нового сервера
+                QJsonObject serverObject = jsonObject["server"].toObject();
+                QString newHost = serverObject["host"].toString();
+                int newPort = serverObject["port"].toInt();
+
+                // Сохраняем для использования в Task
+                smallServerUrl = QString("http://%1:%2").arg(newHost).arg(newPort);
                 accept();  // Закрываем окно и разрешаем доступ
             } else {
                 QMessageBox::warning(this, "Ошибка", message);
@@ -180,6 +188,10 @@ void LoginWindow::on_authLoginButton_clicked() {
     connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
         QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
     });
+}
+
+QString LoginWindow::getSmallServerUrl() const {
+    return smallServerUrl;
 }
 
 void LoginWindow::connectToServer() {

@@ -1,6 +1,7 @@
 #include "loginwindow.h"
 #include "mainwindow.h"
 #include "registrationwindow.h"
+
 #include <QApplication>
 #include <QDebug>
 #include <QVBoxLayout>
@@ -70,7 +71,6 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     MainWindow mainWindow;
     mainWindow.show();
-
 
     // LoginWindow loginWindow;
     // if (loginWindow.exec() == QDialog::Accepted) {
