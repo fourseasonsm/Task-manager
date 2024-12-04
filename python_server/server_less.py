@@ -8,7 +8,11 @@ def connecting_to_database():
         port='5432',
         database='small_server_database',
         user='postgres',
-        password=''
+        #пустой пароль не оставляем, postgre ругается
+        # Если у вас есть несколько баз данных на одном сервере PostgreSQL, 
+        # и один и тот же пользователь имеет доступ к ним, изменение пароля будет глобальным для этого пользователя, 
+        # а не для конкретной базы данных. 
+        password='miumiau' 
     )
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
