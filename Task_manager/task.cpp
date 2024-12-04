@@ -1,5 +1,6 @@
 #include "task.h"
 #include "taskwindow.h"
+
 #include <QVBoxLayout>
 #include <QLineEdit>
 #include <QTextEdit>
@@ -13,9 +14,9 @@
 #include <QJsonObject>
 #include <QMessageBox>
 
-
-Task::Task(QWidget *parent)
-    : QWidget(parent) {
+// создаем член класса, передав адрес обрабатывающего сервера
+Task::Task(const QString &smallServerUrl, QWidget *parent)
+    : QWidget(parent), smallServerUrl(smallServerUrl) {
 
     QVBoxLayout *layout = new QVBoxLayout(this);
 
@@ -90,7 +91,7 @@ Task::Task(QWidget *parent)
 void Task::markAsDone() {
     // Проверка на пустые поля
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url("http://localhost:8079"); // Замените на ваш URL
+    QUrl url(smallServerUrl); // Замените на ваш URL
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -148,7 +149,7 @@ void Task::saveTask() {
     }
 
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url("http://localhost:8079"); // Замените на ваш URL
+    QUrl url(smallServerUrl); // Замените на ваш URL
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 

@@ -1,6 +1,8 @@
 #ifndef TASK_H
 #define TASK_H
 
+#include "loginwindow.h"
+
 #include <QWidget>
 #include <QLabel>
 #include <QLineEdit>
@@ -8,11 +10,11 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-    class Task : public QWidget {
+class Task : public QWidget {
     Q_OBJECT
 
 public:
-    Task(QWidget *parent = nullptr);
+    Task(const QString &smallServerUrl, QWidget *parent = nullptr); // Конструктор с параметром smallServerUrl
 
 private slots:
     void markAsDone(); // Слот для пометки задачи как выполненной
@@ -20,6 +22,7 @@ private slots:
     void saveTask(); // Слот для сохранения задачи
 
 private:
+    QString smallServerUrl; // Член класса для хранения smallServerUrl
     QLineEdit *titleEdit; // Поле для редактирования названия
     QTextEdit *descriptionEdit; // Поле для редактирования описания
     QPushButton *doneButton; // Кнопка для пометки задачи выполненной

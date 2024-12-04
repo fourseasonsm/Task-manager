@@ -14,6 +14,8 @@
 class MainWindow : public QWidget {
     Q_OBJECT
 public:
+    //поле для хранения адреса обрабатывающего сервера, которое передается в конструктор Task
+    QString smallServerUrl;
     MainWindow(QWidget *parent = nullptr);
 
 private slots:
