@@ -75,6 +75,12 @@ Task::Task(const QString &smallServerUrl, QWidget *parent)
     saveButton->setStyleSheet(buttonStyle);
     buttonLayout->addWidget(saveButton);
 
+    // Кнопка закрытия окна (Рената может её облагородить)
+    QPushButton *closeButton = new QPushButton("✖", this); // Используем символ крестика
+    closeButton->setFixedSize(30, 30);
+    closeButton->setStyleSheet(buttonStyle);
+    buttonLayout->addWidget(closeButton);
+
     // Добавляем компоновку кнопок в рамку
     taskBoxLayout->addLayout(buttonLayout);
 
@@ -86,6 +92,7 @@ Task::Task(const QString &smallServerUrl, QWidget *parent)
     connect(doneButton, &QPushButton::clicked, this, &Task::markAsDone);
     connect(openButton, &QPushButton::clicked, this, &Task::openTask);
     connect(saveButton, &QPushButton::clicked, this, &Task::saveTask);
+    connect(closeButton, &QPushButton::clicked, this, &QWidget::close);
 }
 
 void Task::markAsDone() {
@@ -99,7 +106,7 @@ void Task::markAsDone() {
     QJsonObject json;
     json["action"] = "destruction";
     json["task_name"] = titleEdit->text(); // Указываем название задачи
-    json["task_text"] = descriptionEdit->placeholderText(); // Указываем название задачи
+    json["task_text"] = descriptionEdit->toPlainText(); // Указываем описание задачи
     // Преобразуем JSON объект в документ и выводим его в консоль для отладки
     QJsonDocument jsonDoc(json);
 
@@ -141,9 +148,14 @@ void Task::openTask() {
     taskWindow->show();
 }
 
+void Task::close() {
+
+   QWidget::close(); // Вызываем метод close базового класса
+}
+
 void Task::saveTask() {
     // Проверка на пустые поля
-    if (titleEdit->text().isEmpty() || descriptionEdit->placeholderText().isEmpty()) {
+    if (titleEdit->text().isEmpty() || descriptionEdit->toPlainText().isEmpty()) {
         QMessageBox::warning(this, "Ошибка", "Название и описание не могут быть пустыми");
         return;
     }
@@ -157,7 +169,7 @@ void Task::saveTask() {
     QJsonObject json;
     json["action"] = "creation";
     json["task_name"] = titleEdit->text(); // Указываем название задачи
-    json["task_text"] = descriptionEdit->placeholderText(); // Указываем название задачи
+    json["task_text"] = descriptionEdit->toPlainText(); // Указываем название задачи
 
     // Преобразуем JSON объект в документ и выводим его в консоль для отладки
     QJsonDocument jsonDoc(json);
@@ -174,6 +186,7 @@ void Task::saveTask() {
 
             // Проверяем сообщение от сервера
             QString message = jsonObject["message"].toString();
+            qDebug() << message;
             if (message == "Task creation successful!") {
                 QMessageBox::information(this, "Задача сохранена", message);
             } else {

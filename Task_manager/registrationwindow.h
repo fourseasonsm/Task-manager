@@ -21,7 +21,7 @@ public:
 
 private slots:
     void on_registerButton_clicked(); // Слот для обработки нажатия кнопки регистрации
-    void registerUser(); // Новый слот для регистрации
+    bool registerUser(); // Новый слот для регистрации
 
 private:
     QTcpSocket *socket;  // Используем переданный сокет

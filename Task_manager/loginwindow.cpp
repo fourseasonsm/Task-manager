@@ -202,28 +202,37 @@ void LoginWindow::connectToServer() {
 
     // Создаем JSON объект с данными для авторизации
     QJsonObject json;
-    json["action"] = "status"; // Указываем действие
-    // Отправляем POST запрос
+    // Указываем действие проверки работоспособности сервера (это не пустой JSON, а костыль, то есть не баг, а фича
+    json["action"] = "status";
+
+    //Чтобы нормально чистить память, создадим reply вне if
     QNetworkReply *reply = manager->post(request, QJsonDocument(json).toJson());
 
-    // Обрабатываем ответ
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-        if (reply->error() == QNetworkReply::NoError) {
-            QString response = QString::fromUtf8(reply->readAll()).trimmed();
-            QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
-            QJsonObject jsonObject = jsonResponse.object();
+    // Отправляем POST запрос
+    if (!json.isEmpty()) { // Проверяем, что JSON не пустой
 
-            // Проверяем сообщение от сервера
-            QString message = jsonObject["message"].toString();
-            if (message == "Server live!") {
-                connectionStatusLabel->setText("Подключено к серверу ");
+        // Обрабатываем ответ
+        connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+            if (reply->error() == QNetworkReply::NoError) {
+                QString response = QString::fromUtf8(reply->readAll()).trimmed();
+                QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+                QJsonObject jsonObject = jsonResponse.object();
+
+                // Проверяем сообщение от сервера
+                QString message = jsonObject["message"].toString();
+                if (message == "Server live!") {
+                    connectionStatusLabel->setText("Подключено к серверу ");
+                } else {
+                    QMessageBox::warning(this, "Ошибка, сервер перестал работать ", message);
+                }
             } else {
-                QMessageBox::warning(this, "Ошибка", message);
+                QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
             }
-        } else {
-            QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
-        }
+            reply->deleteLater(); // Освобождаем память
+        });
+    } else {
+        QMessageBox::warning(this, "Ошибка", "Не удалось сформировать запрос.");
         reply->deleteLater(); // Освобождаем память
-    });
+    }
 }
 

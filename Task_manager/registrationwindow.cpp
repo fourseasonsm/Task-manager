@@ -104,6 +104,12 @@ void RegistrationWindow::addShadowEffect(QWidget *widget) {
 }
 
 void RegistrationWindow::on_registerButton_clicked() {
+    // Сначала проверяем данные
+    if (!registerUser()) {
+        return; // Если данные неверные, выходим из функции
+    }
+
+    // Если данные корректные, продолжаем с отправкой запроса
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
     QUrl url("http://localhost:8080"); // Замените на ваш URL
     QNetworkRequest request(url);
@@ -115,6 +121,7 @@ void RegistrationWindow::on_registerButton_clicked() {
     json["login"] = loginEdit->text(); // Замените на ваше поле логина
     json["password"] = passwordEdit->text(); // Замените на ваше поле пароля
     json["email"] = emailEdit->text();
+
     // Отправляем POST запрос
     QNetworkReply *reply = manager->post(request, QJsonDocument(json).toJson());
 
@@ -139,7 +146,7 @@ void RegistrationWindow::on_registerButton_clicked() {
     });
 }
 
-void RegistrationWindow::registerUser() {
+bool RegistrationWindow::registerUser() {
     QString login = loginEdit->text();
     QString email = emailEdit->text();
     QString password = passwordEdit->text();
@@ -147,14 +154,17 @@ void RegistrationWindow::registerUser() {
     // Проверка на то, что все поля заполнены
     if (login.isEmpty()||password.isEmpty()||email.isEmpty()) {
         QMessageBox::warning(this, "Неверные данные", "Пустые поля");
+        return false; // Возвращаем false для указания на ошибку
     }
     // Простейшая проверка на длину пароля
     else if (passwordEdit->text().length() < 8) {
         QMessageBox::warning(this, "Неверные данные", "Слишком короткий пароль");
+        return false; // Возвращаем false для указания на ошибку
     }
     // Проверка повторного ввода пароля
     else if (passwordEdit->text()!= dpasswordEdit->text()) {
         QMessageBox::warning(this, "Неверные данные", "Неправильный повторный ввод пароля");
+        return false; // Возвращаем false для указания на ошибку
     }
     else {
         QString credentials = "REGISTER:" + login + ":" + email + ":" + password;
@@ -162,5 +172,6 @@ void RegistrationWindow::registerUser() {
         if (socket->state() == QAbstractSocket::ConnectedState) {
             socket->write(credentials.toUtf8() + "\n");
         }
+        return true; // Все проверки пройдены успешно
     }
 }
