@@ -4,7 +4,7 @@
 #include "projectwindow.h"
 #include "task.h"
 #include "taskwindow.h"
-
+#include "global.h"
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -82,6 +82,16 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     headerLayout->addWidget(authLoginButton, 0, Qt::AlignRight);
     connect(authLoginButton, &QPushButton::clicked, this, &MainWindow::on_authLoginButton_clicked);
 
+    // Кнопка выхода
+    QPushButton *logoutButton = new QPushButton("Выйти", this);
+    logoutButton->setFixedSize(100, 35);
+    logoutButton->setStyleSheet(buttonStyle);
+    logoutButton->hide(); // Скрываем кнопку выхода
+    // addShadowEffect(logoutButton); // Добавляем тень
+
+    headerLayout->addWidget(logoutButton, 0, Qt::AlignRight);
+    connect(logoutButton, &QPushButton::clicked, this, &MainWindow::on_logoutButton_clicked);
+
     // Кнопка регистрации
     QPushButton *regButton = new QPushButton("Зарегистрироваться", this);
     regButton->setFixedSize(150, 35);
@@ -89,7 +99,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     // addShadowEffect(regButton); // Добавляем тень
 
     headerLayout->addWidget(regButton, 0, Qt::AlignRight);
-    connect(regButton, &QPushButton::clicked, this, &MainWindow::on_regButton_clicked);
+    connect(regButton, &QPushButton::clicked, this, &MainWindow::on_regButton_clicked);    connect(regButton, &QPushButton::clicked, this, &MainWindow::on_regButton_clicked);
 
 
 
@@ -266,23 +276,31 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
 
 // Слот для создания новой задачи
 void MainWindow::createNewTask() {
-    //создаем член класса от адреса сервера
-    Task *newTask = new Task(smallServerUrl,this);
+    if (isLoggedIn == true) {
+        Task *newTask = new Task(smallServerUrl, this);
 
-    tasksLayout->addWidget(newTask);
+        tasksLayout->addWidget(newTask);
 
-    // Центрируем все задачи по верхнему краю контейнера
-    tasksLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
+        // Центрируем все задачи по верхнему краю контейнера
+        tasksLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
+    } else {
+        QMessageBox::warning(this, "Ошибка",  "Для создания задачи необходимо авторизоваться");
+    }
 }
 
 // Слот для создания нового проекта
 void MainWindow::createNewProject() {
-    Project *newProject = new Project(this);
+    if (isLoggedIn == true) {
+        Project *newProject = new Project(this);
 
-    tasksLayout->addWidget(newProject);
+        tasksLayout->addWidget(newProject);
 
-    // Центрируем все проекты по верхнему краю контейнера
-    tasksLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
+        // Центрируем все проекты по верхнему краю контейнера
+        tasksLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
+    } else {
+        QMessageBox::warning(this, "Ошибка", "Для создания проекта необходимо авторизоваться");
+    }
+
 }
 
 // Нажатие на кнопку для перехода к окну регистрации
@@ -292,6 +310,26 @@ void MainWindow::on_authLoginButton_clicked()
     //по сути то же самое, что show, только с show геттер не работает
     if (loginWindow->exec() == QDialog::Accepted) {
         smallServerUrl = loginWindow->getSmallServerUrl();
+    }
+}
+
+// Нажатие на кнопку выхода
+void MainWindow::on_logoutButton_clicked()
+{
+    isLoggedIn = false;
+    updateAuthButtons();
+}
+
+void MainWindow::updateAuthButtons()
+{
+    if (isLoggedIn) {
+        authLoginButton->hide();
+        regButton->hide();
+        logoutButton->show();
+    } else {
+        authLoginButton->show();
+        regButton->show();
+        logoutButton->hide();
     }
 }
 

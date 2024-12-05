@@ -1,12 +1,13 @@
 #include "loginwindow.h"
 #include "registrationwindow.h"
-
+#include "global.h"
 #include <QGraphicsDropShadowEffect>
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QLineEdit>
 #include <QLabel>
+
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -14,6 +15,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMessageBox>
+
+bool isLoggedIn = false; // Глобальная переменная для проверки авторизации
 
 LoginWindow::LoginWindow(QWidget *parent)
     : QDialog(parent)
@@ -166,6 +169,7 @@ void LoginWindow::on_authLoginButton_clicked() {
             // Проверяем сообщение от сервера
             QString message = jsonObject["message"].toString();
             if (message == "Login successful!") {
+                isLoggedIn = true; // Глобальная переменная для проверки авторизации
                 authenticated = true;
                 // Сохраняем адрес и порт нового сервера
 //                QJsonObject serverObject = jsonObject["server"].toObject();
