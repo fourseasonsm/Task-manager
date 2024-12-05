@@ -157,7 +157,7 @@ bool RegistrationWindow::registerUser() {
         return false; // Возвращаем false для указания на ошибку
     }
     // Простейшая проверка на длину пароля
-    else if (passwordEdit->text().length() < 8) {
+    else if (passwordEdit->text().length() < 2) {
         QMessageBox::warning(this, "Неверные данные", "Слишком короткий пароль");
         return false; // Возвращаем false для указания на ошибку
     }
@@ -167,11 +167,6 @@ bool RegistrationWindow::registerUser() {
         return false; // Возвращаем false для указания на ошибку
     }
     else {
-        QString credentials = "REGISTER:" + login + ":" + email + ":" + password;
-
-        if (socket->state() == QAbstractSocket::ConnectedState) {
-            socket->write(credentials.toUtf8() + "\n");
-        }
         return true; // Все проверки пройдены успешно
     }
 }

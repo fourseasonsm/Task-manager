@@ -3,6 +3,10 @@ import json
 import psycopg2
 import hashlib
 
+# Хранение зарегистрированных пользователей
+users = {}
+users_online = { 'test1' :'test1' , 'test2' : 'test2'}
+
 # Функция для распределения по серверам
 def assign_server(user_identifier, servers):
 
@@ -60,6 +64,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             login = data.get('login')
             password = data.get('password')
             email = data.get('email')
+            # server_url = data.get ('url_of_small_server')
 
         except json.JSONDecodeError:
             self.send_response(400)  # Bad Request
@@ -75,6 +80,17 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             response = {
                 'message': 'Server live!',
             }
+        elif action == 'logout':
+            del users_online[login]
+            response = {
+                'message': 'Logout successful!',
+            }
+        elif action == 'list_of_user':
+            list_of_user = ",".join(users_online.keys())
+            response = {
+                'message': 'List sended',
+                'list_of_users': list_of_user,
+            }
         else:
             response = {
                 'message': 'Invalid action. Use "register" or "login".'
@@ -86,48 +102,57 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
+            
+            # Проверка на существующий логин
             cursor.execute("SELECT * FROM users WHERE login = %s", (login,))
             if cursor.fetchone():
-                return {
-                    'message': 'Ошибка регистрации, такой логин уже существует'
-                }
-            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))  # Исправленный запрос
+                return {'message': 'Ошибка регистрации, такой логин уже существует'}
+            
+            # Проверка на существующую почту
+            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
             if cursor.fetchone():
-                return {
-                    'message': 'Ошибка регистрации, пользователь с такой почтой уже существует'
-                }
-            cursor.execute("INSERT INTO users (login, password, email) VALUES (%s, %s, %s)", (login, password, email))
+                return {'message': 'Ошибка регистрации, пользователь с такой почтой уже существует'}
+            
+            # Список доступных серверов
+            servers = [
+                {'host': '127.0.0.1', 'port': 8081},
+                {'host': '127.0.0.1', 'port': 8082},
+                {'host': '127.0.0.1', 'port': 8083},
+            ]
+            
+            # Выбор сервера для нового пользователя
+            assigned_server = assign_server(login, servers)
+            server_url = f"http://{assigned_server['host']}:{assigned_server['port']}"
+            
+            # Добавление нового пользователя с адресом сервера
+            cursor.execute(
+                "INSERT INTO users (login, password, email, url_of_small_server) VALUES (%s, %s, %s, %s)",
+                (login, password, email, server_url)
+            )
+            
             connect.commit()
             cursor.close()
             connect.close()
+            
             return {
-                'message': 'Registration successful!', #менять нельзя, обрабатывается в клиенте
-                'login': login
+                'message': 'Registration successful!',  # менять нельзя, обрабатывается в клиенте
+                'login': login,
             }
         except Exception as e:
-            connect.rollback()  # Отменяем транзакцию если она кривая
+            connect.rollback()  # Отмена транзакции в случае ошибки
             print(f"Возникла ошибка связанная с базой данных: {e}")
-            return {
-                'message': 'Регистрация не завершена, ошибка транзакции'
-            }
+            return {'message': 'Регистрация не завершена, ошибка транзакции'}
 
-    def handle_login(self, login, password):
+    def handle_login(self, login, password, server_url):
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
-            cursor.execute("SELECT * FROM users WHERE login = %s AND password = %s", (login, password))
+            cursor.execute("SELECT * FROM users WHERE login = %s AND password = %s AND url_of_small_server = %s", (login, password, server_url, ))
             if cursor.fetchone():
-                # Распределение по серверам
-                servers = [
-                    {'host': '127.0.0.1', 'port': 8079},
-                    {'host': '127.0.0.1', 'port': 8081},
-                    {'host': '127.0.0.1', 'port': 8082},
-                ]
-                assigned_server = assign_server(login, servers)
                 return {
                     'message': 'Login successful!',
                     'login': login,
-                    'server': assigned_server
+                    'server': server_url
                 }
             else:
                 return {'message': 'Неправильный логин или пароль'}
