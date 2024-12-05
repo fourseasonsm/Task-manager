@@ -107,7 +107,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
 
-def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, port=8079):
+def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, port=8081):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
     print(f'Starting server on port {port}...')
