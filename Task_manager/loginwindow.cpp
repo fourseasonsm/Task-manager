@@ -168,12 +168,12 @@ void LoginWindow::on_authLoginButton_clicked() {
             if (message == "Login successful!") {
                 authenticated = true;
                 // Сохраняем адрес и порт нового сервера
-                QJsonObject serverObject = jsonObject["server"].toObject();
-                QString newHost = serverObject["host"].toString();
-                int newPort = serverObject["port"].toInt();
+//                QJsonObject serverObject = jsonObject["server"].toObject();
+//                QString newHost = serverObject["host"].toString();
+//                int newPort = serverObject["port"].toInt();
 
                 // Сохраняем для использования в Task
-                smallServerUrl = QString("http://%1:%2").arg(newHost).arg(newPort);
+                smallServerUrl = jsonObject["server"].toString();
                 accept();  // Закрываем окно и разрешаем доступ
             } else {
                 QMessageBox::warning(this, "Ошибка", message);

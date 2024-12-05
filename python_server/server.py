@@ -143,17 +143,23 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             print(f"Возникла ошибка связанная с базой данных: {e}")
             return {'message': 'Регистрация не завершена, ошибка транзакции'}
 
-    def handle_login(self, login, password, server_url):
+    def handle_login(self, login, password):
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
-            cursor.execute("SELECT * FROM users WHERE login = %s AND password = %s AND url_of_small_server = %s", (login, password, server_url, ))
-            if cursor.fetchone():
+            # Изменяем запрос, чтобы выбрать url_of_small_server
+            cursor.execute("SELECT url_of_small_server FROM users WHERE login = %s AND password = %s", (login, password,))
+            
+            # Извлекаем результат
+            result = cursor.fetchone()
+            
+            if result:
+                server_url = result[0]  # Получаем server_url из результата                
                 return {
-                    'message': 'Login successful!',
-                    'login': login,
-                    'server': server_url
-                }
+                        'message': 'Login successful!',
+                        'login': login,
+                        'server': server_url
+                    }
             else:
                 return {'message': 'Неправильный логин или пароль'}
         except Exception as e:
