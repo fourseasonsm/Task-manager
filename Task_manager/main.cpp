@@ -1,7 +1,7 @@
 #include "loginwindow.h"
 #include "mainwindow.h"
 #include "registrationwindow.h"
-
+#include "global.h"
 #include <QApplication>
 #include <QDebug>
 #include <QVBoxLayout>
@@ -24,7 +24,7 @@ public:
 
 private:
     void sendLoginRequest() {
-        if (user_login_global != "k") {
+        if (isLoggedIn) {
             QNetworkAccessManager *manager = new QNetworkAccessManager(this);
             QUrl url("http://localhost:8080"); // Замените на ваш URL
             QNetworkRequest request(url);

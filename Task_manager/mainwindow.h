@@ -23,11 +23,16 @@ private slots:
     void createNewProject();
     void on_authLoginButton_clicked();
     void on_regButton_clicked();
+    void on_logoutButton_clicked();
+    void updateAuthButtons();
 
 private:
     QScrollArea *scrollArea; // Указатель на QScrollArea
     QVBoxLayout *tasksLayout; // Layout для хранения задач
     QVBoxLayout *centerStripeLayout; // Вертикальный слой для центральной полосы
+    QPushButton *authLoginButton;
+    QPushButton *regButton;
+    QPushButton *logoutButton;
 };
 
 #endif // MAINWINDOW_HPP
