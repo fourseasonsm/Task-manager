@@ -92,16 +92,16 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
-            cursor.execute("SELECT * FROM users_online")
-            users_online_list = cursor.fetchall()  # Получаем все строки результата
-            cursor.close()  # Закрываем курсор
-            connect.close()  # Закрываем соединение с базой данных
+            cursor.execute("SELECT login FROM users WHERE is_online = true")
+            users_online_list = cursor.fetchall()  
+            cursor.close()  
+            connect.close()  
             return {
                 'message': 'List sended',
                 'list_of_users': users_online_list,
             }
         except Exception as e:
-            connect.rollback()  # Отмена транзакции в случае ошибки
+            connect.rollback()  
             print(f"Возникла ошибка связанная с базой данных: {e}")
             return {'message': 'Ошибка транзакции'}
         finally:
@@ -112,6 +112,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     
 
     def handle_register(self, login, password, email):
+        connect = None
+        cursor = None
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
@@ -139,22 +141,26 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         
             # Добавление нового пользователя с адресом сервера
             cursor.execute(
-                "INSERT INTO users (login, password, email, server_url) VALUES (%s, %s, %s, %s)",
+                "INSERT INTO users (login, password, email, server_url, isOnline) VALUES (%s, %s, %s, %s, false)",
                 (login, password, email, server_url)
             )
         
             connect.commit()
-            cursor.close()
-            connect.close()
         
             return {
                 'message': 'Registration successful!',  # менять нельзя, обрабатывается в клиенте
                 'login': login,
             }
         except Exception as e:
-            connect.rollback()  # Отмена транзакции в случае ошибки
+            if connect:
+                connect.rollback()  # Отмена транзакции в случае ошибки
             print(f"Возникла ошибка связанная с базой данных: {e}")
             return {'message': 'Регистрация не завершена, ошибка транзакции'}
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
     
     def handle_login(self, login, password):
         try:
@@ -168,10 +174,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             
             if result:
                 server_url = result[0]  # Получаем server_url из результата
-                cursor.execute(
-                "INSERT INTO users_online (login, server_url) VALUES (%s, %s)", #новая таблица для хранения пользователей онлайн
-                (login, server_url)
-                )
+                cursor.execute("UPDATE users SET isOnline = true WHERE login = %s", (login,))#,boolean is_online меняется на true если пользователь онлайн
                 connect.commit()               
                 return {
                         'message': 'Login successful!',
@@ -197,15 +200,11 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if result:
                 server_url = result[0]  # Получаем server_url из результата
                 cursor.execute(
-                "DELETE FROM users_online (login, server_url) VALUES (%s, %s)", #новая таблица для хранения пользователей онлайн
-                (login, server_url)
+                cursor.execute("UPDATE users SET isOnline = false WHERE login = %s", (login,))
                 )
                 connect.commit()
-            if cursor.rowcount > 0:
                 return {
-                        'message': 'Login successful!',
-                        'login': login,
-                        'server': server_url
+                        'message': 'Logout successful!'
                     }          
             else:
                 return {'message': 'Ошибка выхода'}
