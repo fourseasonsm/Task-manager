@@ -33,7 +33,7 @@ InviteWindow::InviteWindow(QWidget *parent)
 
     // Стиль полей
     QString lineEditStyle = "background-color: #e1f0db; color: black; font-size: 14px; outline: none; border: none;";
-    QString buttonStyle = "background-color: #3b4f2a; color: white; font-weight: bold; outline: none; border: none; border-radius: 5px; padding: 10px;";
+    QString buttonStyle = "background-color: #3b4f2a; color: white; outline: none; border: none; border-radius: 5px; padding: 10px;";
 
 
     // Поле логина

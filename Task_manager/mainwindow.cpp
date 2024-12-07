@@ -31,8 +31,8 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
     // Белая шапка
-    QLabel *topPart = new QLabel();
-    topPart->setStyleSheet("background-color: white;");
+    QLabel *topPart = new QLabel("Task Manager");
+    topPart->setStyleSheet("background-color: white; color: black; font-weight: bold; font-size: 30px;");
     topPart->setFixedHeight(60);
     topPart->setAlignment(Qt::AlignCenter);
     mainLayout->addWidget(topPart);
@@ -40,7 +40,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     QHBoxLayout *headerLayout = new QHBoxLayout(topPart); // Горизонтальный слой
 
     // Стиль кнопок
-    QString buttonStyle = "background-color: #3b4f2a; color: white; font-weight: bold; outline: none; border: none; border-radius: 5px; padding: 10px;";
+    QString buttonStyle = "background-color: #3b4f2a; color: white; font-size: 13px; font-weight: bold; outline: none; border: none; border-radius: 5px; padding: 10px;";
 
     // Кнопка создания задачи
     QPushButton *newTaskButton = new QPushButton("Создать задачу", this);
@@ -59,44 +59,32 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     connect(newProjectButton, &QPushButton::clicked, this, &MainWindow::createNewProject);
 
     // Добавляем пустое пространство слева для выравнивания
-    headerLayout->addStretch(1);
-
-    // Название проекта Task Manager
-    QLabel *title = new QLabel("Task Manager", this);
-    title->setStyleSheet("background-color: transparent; color: black; font-weight: bold; font-size: 30px;");
-    headerLayout->addWidget(title);
-
-    // Добавляем пустое пространство справа для выравнивания
-    headerLayout->addStretch(1);
+    headerLayout->addSpacerItem(new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum));
 
     // Кнопка входа
-    /*QPushButton **/authLoginButton = new QPushButton("Войти", this);
+    authLoginButton = new QPushButton("Войти", this);
     authLoginButton->setFixedSize(100, 35);
     authLoginButton->setStyleSheet(buttonStyle);
-    // addShadowEffect(authLoginButton); // Добавляем тень
 
     headerLayout->addWidget(authLoginButton, 0, Qt::AlignRight);
     connect(authLoginButton, &QPushButton::clicked, this, &MainWindow::on_authLoginButton_clicked);
 
     // Кнопка выхода
-    /*QPushButton **/logoutButton = new QPushButton("Выйти", this);
+    logoutButton = new QPushButton("Выйти", this);
     logoutButton->setFixedSize(100, 35);
     logoutButton->setStyleSheet(buttonStyle);
     logoutButton->hide(); // Скрываем кнопку выхода
-    // addShadowEffect(logoutButton); // Добавляем тень
 
     headerLayout->addWidget(logoutButton, 0, Qt::AlignRight);
     connect(logoutButton, &QPushButton::clicked, this, &MainWindow::on_logoutButton_clicked);
 
     // Кнопка регистрации
-    /*QPushButton **/regButton = new QPushButton("Зарегистрироваться", this);
+    regButton = new QPushButton("Зарегистрироваться", this);
     regButton->setFixedSize(150, 35);
     regButton->setStyleSheet(buttonStyle);
-    // addShadowEffect(regButton); // Добавляем тень
 
     headerLayout->addWidget(regButton, 0, Qt::AlignRight);
     connect(regButton, &QPushButton::clicked, this, &MainWindow::on_regButton_clicked);
-
 
 
     // Разделитель
@@ -106,8 +94,6 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     separator->setLineWidth(2);
     separator->setStyleSheet("color: #3b4f2a;");
     mainLayout->addWidget(separator);
-
-
 
 
 
