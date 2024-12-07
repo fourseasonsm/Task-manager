@@ -1,22 +1,25 @@
 #include "mainwindow.h"
 #include "loginwindow.h"
+#include "global.h"
 #include "registrationwindow.h"
 #include "projectwindow.h"
+#include "task.h"
+#include "taskwindow.h"
+
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QLineEdit>
 #include <QLabel>
 #include <QListWidget>
-#include "task.h"
-#include "taskwindow.h"
 #include <QVBoxLayout>
 #include <QLineEdit>
 #include <QTextEdit>
 #include <QPushButton>
 #include <QFrame>
+#include <QGridLayout>
 
-
+bool isLoggedIn = false;
 
 // Цвета: Средний зеленый -  #a7bfa5, светлый зеленый - #e1f0db, темный зеленый - #3b4f2a
 
@@ -67,7 +70,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     headerLayout->addStretch(1);
 
     // Кнопка входа
-    QPushButton *authLoginButton = new QPushButton("Войти", this);
+    /*QPushButton **/authLoginButton = new QPushButton("Войти", this);
     authLoginButton->setFixedSize(100, 35);
     authLoginButton->setStyleSheet(buttonStyle);
     // addShadowEffect(authLoginButton); // Добавляем тень
@@ -75,8 +78,18 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     headerLayout->addWidget(authLoginButton, 0, Qt::AlignRight);
     connect(authLoginButton, &QPushButton::clicked, this, &MainWindow::on_authLoginButton_clicked);
 
+    // Кнопка выхода
+    /*QPushButton **/logoutButton = new QPushButton("Выйти", this);
+    logoutButton->setFixedSize(100, 35);
+    logoutButton->setStyleSheet(buttonStyle);
+    logoutButton->hide(); // Скрываем кнопку выхода
+    // addShadowEffect(logoutButton); // Добавляем тень
+
+    headerLayout->addWidget(logoutButton, 0, Qt::AlignRight);
+    connect(logoutButton, &QPushButton::clicked, this, &MainWindow::on_logoutButton_clicked);
+
     // Кнопка регистрации
-    QPushButton *regButton = new QPushButton("Зарегистрироваться", this);
+    /*QPushButton **/regButton = new QPushButton("Зарегистрироваться", this);
     regButton->setFixedSize(150, 35);
     regButton->setStyleSheet(buttonStyle);
     // addShadowEffect(regButton); // Добавляем тень
@@ -212,35 +225,72 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
 
 // Слот для создания новой задачи
 void MainWindow::createNewTask() {
-    Task *newTask = new Task(this);
+    if (isLoggedIn == true) {
+        Task *newTask = new Task(this);
 
-    tasksLayout->addWidget(newTask);
+        tasksLayout->addWidget(newTask);
 
-    // Центрируем все задачи по верхнему краю контейнера
-    tasksLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
+        // Центрируем все задачи по верхнему краю контейнера
+        tasksLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
+    } else {
+        QMessageBox::warning(this, "Ошибка",  "Для создания задачи необходимо авторизоваться");
+    }
 }
 
 // Слот для создания нового проекта
 void MainWindow::createNewProject() {
-    Project *newProject = new Project(this);
+    if (isLoggedIn == true) {
+        Project *newProject = new Project(this);
 
-    tasksLayout->addWidget(newProject);
+        tasksLayout->addWidget(newProject);
 
-    // Центрируем все проекты по верхнему краю контейнера
-    tasksLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
+        // Центрируем все проекты по верхнему краю контейнера
+        tasksLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
+    } else {
+        QMessageBox::warning(this, "Ошибка", "Для создания проекта необходимо авторизоваться");
+    }
+
 }
 
-// Нажатие на кнопку для перехода к окну регистрации
+// Нажатие на кнопку для перехода к окну авторизации
 void MainWindow::on_authLoginButton_clicked()
 {
+    isLoggedIn = true;
+    updateAuthButtons();
+
     LoginWindow *loginWindow = new LoginWindow(this);
-    loginWindow->show(); // Отображается поверх окна логина, можно потом пофиксить
+    loginWindow->setAttribute(Qt::WA_DeleteOnClose);  // Автоматическое удаление окна при закрытии
+    loginWindow->show();
+
 }
 
 // Нажатие на кнопку для перехода к окну регистрации
 void MainWindow::on_regButton_clicked()
 {
     RegistrationWindow *registerWindow = new RegistrationWindow(this);
-    registerWindow->show(); // Отображается поверх окна логина, можно потом пофиксить
+    registerWindow->show();
 }
 
+// Нажатие на кнопку выхода
+void MainWindow::on_logoutButton_clicked()
+{
+    isLoggedIn = false;
+    updateAuthButtons();
+}
+
+
+// Меняем кнопки "Войти" и "Зарегистрироваться" на "Выйти" и наоборот
+void MainWindow::updateAuthButtons()
+{
+    if (isLoggedIn) {
+        authLoginButton->hide();
+        regButton->hide();
+        logoutButton->show();
+    } else {
+        authLoginButton->show();
+        regButton->show();
+        logoutButton->hide();
+    }
+
+    this->update();
+}
