@@ -2,12 +2,22 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import psycopg2
 import hashlib
+import requests
 
 # Функция для распределения по серверам
 def assign_server(user_identifier, servers):
 
     hash_value = int(hashlib.md5(user_identifier.encode()).hexdigest(), 16)
     return servers[hash_value % len(servers)]
+
+def send_user_data_to_server(server_url, login, user_id):
+    data = {'action': 'register', 'login': login, 'user_id': user_id, 'server_url': server_url}
+    json_data = json.dumps(data, indent=4)
+    try:
+        response = requests.post(server_url, data=json_data)
+        response.raise_for_status()  # Raise an exception for bad status codes
+    except requests.RequestException as e:
+        print(f"Error sending user data to server: {e}")
 
 # подключение через функцию, глобальная переменная выдает кучу ошибок которые я не хочу чинить
 def connecting_to_database():
@@ -16,7 +26,7 @@ def connecting_to_database():
         port='5432',
         database='server_database',
         user='postgres',
-        password='miu'
+        password='miumiau'
     )
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -131,8 +141,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             # Список доступных серверов
             servers = [
                 {'host': '127.0.0.1', 'port': 8081},
-                {'host': '127.0.0.1', 'port': 8082},
-                {'host': '127.0.0.1', 'port': 8083},
+                # {'host': '127.0.0.1', 'port': 8082},
+                # {'host': '127.0.0.1', 'port': 8083},
             ]
         
             # Выбор сервера для нового пользователя
@@ -146,7 +156,11 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             )
         
             connect.commit()
-        
+            
+            cursor.execute("SELECT user_id FROM users WHERE login = %s", (login,))
+            user_id = cursor.fetchone()[0]
+            send_user_data_to_server(server_url, login, user_id)
+
             return {
                 'message': 'Registration successful!',  # менять нельзя, обрабатывается в клиенте
                 'login': login,
