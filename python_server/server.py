@@ -141,8 +141,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             # Список доступных серверов
             servers = [
                 {'host': '127.0.0.1', 'port': 8081},
-                # {'host': '127.0.0.1', 'port': 8082},
-                # {'host': '127.0.0.1', 'port': 8083},
+                {'host': '127.0.0.1', 'port': 8082},
+                {'host': '127.0.0.1', 'port': 8083},
             ]
         
             # Выбор сервера для нового пользователя
@@ -151,7 +151,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         
             # Добавление нового пользователя с адресом сервера
             cursor.execute(
-                "INSERT INTO users (login, password, email, server_url, isOnline) VALUES (%s, %s, %s, %s, false)",
+                "INSERT INTO users (login, password, email, server_url, isOnline, scrore) VALUES (%s, %s, %s, %s, false, 0)",
                 (login, password, email, server_url)
             )
         
