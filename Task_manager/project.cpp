@@ -1,6 +1,8 @@
 #include "project.h"
 #include "projectwindow.h"
 #include "mainwindow.h"
+#include "invitewindow.h"
+
 #include <QVBoxLayout>
 #include <QLineEdit>
 #include <QPushButton>
@@ -160,11 +162,13 @@ void Project::addSubTask() {
     connect(subTaskWeight, &QLineEdit::textChanged, this, &Project::textChanged);
 
     // Подключаем сигнал кнопки "Пригласить" к слоту
-    connect(inviteButton, &QPushButton::clicked, this, &Project::onInviteButtonClicked);
+    connect(inviteButton, &QPushButton::clicked, this, &Project::on_inviteButton_clicked);
 }
 
-void Project::onInviteButtonClicked() {
-    // Реализуйте логику для кнопки "Пригласить"
+void Project::on_inviteButton_clicked() {
+
+    InviteWindow *inviteWindow = new InviteWindow(this);
+    inviteWindow->show();
 }
 
 void Project::textChanged() {
