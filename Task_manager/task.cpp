@@ -95,6 +95,88 @@ Task::Task(const QString &smallServerUrl, QWidget *parent)
     connect(closeButton, &QPushButton::clicked, this, &QWidget::close);
 }
 
+Task::Task(const QString &smallServerUrl, QWidget *parent, QString task_name, QString task_text) // конструктор класса таск с передачей параметров
+    : QWidget(parent), smallServerUrl(smallServerUrl) {
+
+    QVBoxLayout *layout = new QVBoxLayout(this);
+
+    QLabel *taskBox = new QLabel(this);
+    taskBox->setStyleSheet("background-color: #a7bfa5;");
+    taskBox->setAlignment(Qt::AlignTop | Qt::AlignCenter);
+    layout->addWidget(taskBox);
+
+    QVBoxLayout *taskBoxLayout = new QVBoxLayout(taskBox);
+
+    // Стиль полей
+    QString lineEditStyle = "background-color: #e1f0db; color: black; font-size: 14px; outline: none; border: none;";
+
+    // Стиль кнопок
+    QString buttonStyle = "background-color: #3b4f2a; color: white; outline: none; border: none; border-radius: 5px; padding: 10px;";
+
+    // Отступ сверху
+    taskBoxLayout->addSpacing(5);
+
+    // Поле ввода названия задачи
+    titleEdit = new QLineEdit(this);
+    titleEdit->setStyleSheet(lineEditStyle + "font-weight: bold;");
+    titleEdit->setFixedHeight(40);
+    titleEdit->setPlaceholderText("Название задачи");
+    titleEdit->setText(task_name);
+    taskBoxLayout->addWidget(titleEdit);
+
+    // Отступ
+    taskBoxLayout->addSpacing(5);
+
+    // Поле ввода описания задачи
+    descriptionEdit = new QTextEdit(this);
+    descriptionEdit->setStyleSheet(lineEditStyle);
+    descriptionEdit->setFixedHeight(60);
+    descriptionEdit->setPlaceholderText("Описание задачи");
+    descriptionEdit->setText(task_text);
+    taskBoxLayout->addWidget(descriptionEdit);
+
+    // Горизонтальный слой для кнопки "Выполнить"
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    buttonLayout->addStretch(); // Заполнитель слева для выравнивания кнопки вправо
+
+    // Кнопка открытия задачи
+    openButton = new QPushButton("Открыть", this);
+    openButton->setFixedSize(100, 40);
+    openButton->setStyleSheet(buttonStyle);
+    buttonLayout->addWidget(openButton);
+
+    // Кнопка выполнения
+    doneButton = new QPushButton("Выполнить", this);
+    doneButton->setFixedSize(100, 40);
+    doneButton->setStyleSheet(buttonStyle);
+    buttonLayout->addWidget(doneButton);
+
+    // Кнопка сохранения
+    saveButton = new QPushButton("Сохранить", this);
+    saveButton->setFixedSize(100, 40);
+    saveButton->setStyleSheet(buttonStyle);
+    buttonLayout->addWidget(saveButton);
+
+    // Кнопка закрытия окна (Рената может её облагородить)
+    QPushButton *closeButton = new QPushButton("✖", this); // Используем символ крестика
+    closeButton->setFixedSize(30, 30);
+    closeButton->setStyleSheet(buttonStyle);
+    buttonLayout->addWidget(closeButton);
+
+    // Добавляем компоновку кнопок в рамку
+    taskBoxLayout->addLayout(buttonLayout);
+
+    // Добавляем рамку в главный слой
+    layout->addWidget(taskBox);
+
+    setMinimumSize(400, 200); // Устанавливаем минимальный размер окна
+
+    connect(doneButton, &QPushButton::clicked, this, &Task::markAsDone);
+    connect(openButton, &QPushButton::clicked, this, &Task::openTask);
+    connect(saveButton, &QPushButton::clicked, this, &Task::saveTask);
+    connect(closeButton, &QPushButton::clicked, this, &QWidget::close);
+}
+
 void Task::markAsDone() {
     // Проверка на пустые поля
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
@@ -105,6 +187,8 @@ void Task::markAsDone() {
     // Создаем JSON объект с данными для авторизации
     QJsonObject json;
     json["action"] = "destruction";
+    json["login"] = user_login_global;
+    json["task_id"] = task_id;
     json["task_name"] = titleEdit->text(); // Указываем название задачи
     json["task_text"] = descriptionEdit->toPlainText(); // Указываем описание задачи
     // Преобразуем JSON объект в документ и выводим его в консоль для отладки
@@ -168,6 +252,7 @@ void Task::saveTask() {
     // Создаем JSON объект с данными для авторизации
     QJsonObject json;
     json["action"] = "creation";
+    json["login"] = user_login_global;
     json["task_name"] = titleEdit->text(); // Указываем название задачи
     json["task_text"] = descriptionEdit->toPlainText(); // Указываем название задачи
 
@@ -186,8 +271,9 @@ void Task::saveTask() {
 
             // Проверяем сообщение от сервера
             QString message = jsonObject["message"].toString();
-            qDebug() << message;
+            QString task_id_temp = jsonObject["task_id"].toString();
             if (message == "Task creation successful!") {
+                task_id=task_id_temp;
                 QMessageBox::information(this, "Задача сохранена", message);
             } else {
                 QMessageBox::warning(this, "Ошибка при сохранении задачи", message);

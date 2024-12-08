@@ -2,7 +2,9 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 
 # Хранение зарегистрированных пользователей
-tasks = {}
+tasks = {'test0' :['test_1' ,'test1']}
+test = tasks['test0'][0]+',' + tasks['test0'][1]
+print (test)
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     
     def do_POST(self):
@@ -20,35 +22,58 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             data = json.loads(post_data)
             action = data.get('action')
+            user_name = data.get('login')
             task_name = data.get('task_name')
             task_text = data.get('task_text')
         except json.JSONDecodeError:
             self.send_response(400)  # Bad Request
             self.wfile.write(json.dumps({'error': 'Invalid JSON'}).encode('utf-8'))
             return
-
         if action == 'creation':
             # Обработка действий
-            if task_name  in tasks and tasks[task_name] == task_text:
+            print (tasks[user_name])
+            if task_name  in tasks[user_name]:
+                print (action)
                 response = {
                 'message': 'Task creation failed. Task already exists.'
-            }
+                }
             else:
-                tasks[task_name] = task_text
+                tasks[user_name].append(task_name)
+                tasks[user_name].append(task_text)
+                print (action)
                 response = {
                 'message': 'Task creation successful!',
                 'task_name': task_name
-            }
-        elif action == 'destruction':
-            if task_name in tasks and tasks[task_name] == task_text:
-                del tasks[task_name]
+                }
+        elif action == 'list_of_tasks':
+            print (tasks[user_name])
+            if tasks[user_name]:
+                list_of_tasks = ""
+                for i in range(0, len(tasks[user_name])-1) :
+                    list_of_tasks = list_of_tasks+tasks[user_name][i] + ',' + tasks[user_name][i+1]
+                    i=i+1
                 response = {
-                    'message': 'Destruction successful!',
+                    'message': 'List sended',
+                    'list_of_tasks': list_of_tasks,
                 }
             else:
                 response = {
-                    'message': 'Destruction failed. Task doesnt exists.'
+                'message': 'Task list empty!',
                 }
+        elif action == 'destruction':
+            check_destruction = 0
+            for i in range(0, len(tasks[user_name])) :
+                if task_name  == tasks[user_name][i] and tasks[user_name][i+1] == task_text:
+                    tasks[user_name].pop(i)
+                    tasks[user_name].pop(i)
+                    check_destruction = 1
+                    response = {
+                        'message': 'Destruction successful!',
+                    }
+            if check_destruction == 0:
+                response = {
+                    'message': 'Destruction failed. Task doesnt exists.'
+                }            
         else:
             response = {
                 'message': 'Invalid action. Use "creation" or "destruction".'

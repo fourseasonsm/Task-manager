@@ -312,6 +312,7 @@ void MainWindow::on_authLoginButton_clicked()
         smallServerUrl = loginWindow->getSmallServerUrl();
     }
     updateAuthButtons();
+    Load_list_of_tasks();
 }
 
 // Нажатие на кнопку выхода
@@ -319,6 +320,80 @@ void MainWindow::on_logoutButton_clicked()
 {
     isLoggedIn = false;
     updateAuthButtons();
+}
+
+void MainWindow::Load_list_of_tasks()
+{
+    if (isLoggedIn) {
+        // Проверка на пустые поля
+        QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+        QUrl url(smallServerUrl); // Замените на ваш URL
+        QNetworkRequest request(url);
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+        // Создаем JSON объект с данными для авторизации
+        QJsonObject json;
+        json["action"] = "list_of_tasks";
+        json["login"] = user_login_global; // Замените на ваше поле логина
+        // Преобразуем JSON объект в документ и выводим его в консоль для отладки
+        QJsonDocument jsonDoc(json);
+
+        // Отправляем POST запрос
+        QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+
+        // Обрабатываем ответ
+        connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+            if (reply->error() == QNetworkReply::NoError) {
+                QString response = QString::fromUtf8(reply->readAll()).trimmed();
+                QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+                QJsonObject jsonObject = jsonResponse.object();
+
+                // Проверяем сообщение от сервера
+                QString message = jsonObject["message"].toString();
+                QString list_of_tasks = jsonObject["list_of_tasks"].toString();
+                int counter = 0;
+                if (message == "List sended") {
+                    QString temp = "";
+                    QString task_name_temp;
+                    for (int i =0;i<=list_of_tasks.size()-1;i++){
+                        if(list_of_tasks[i] != ','){
+                            temp = temp + list_of_tasks[i];
+                        }
+                        else {
+                            if (counter % 2 == 0){
+                                task_name_temp = temp;
+                                temp = "";
+                            }
+                            else {
+                                Task *newTask = new Task(smallServerUrl, this,task_name_temp,temp);
+                                tasksLayout->addWidget(newTask);
+                                temp = "";
+                            }
+                            counter++;
+                        }
+                    }
+                    Task *newTask = new Task(smallServerUrl, this,task_name_temp,temp);
+                    tasksLayout->addWidget(newTask);
+                    temp = "";
+                    QMessageBox::information(this, "Загрузка задач", "Загрузка задач прошла успешно");
+                } else {
+                    QMessageBox::warning(this, "Ошибка при при отправке задач", message);
+                }
+            } else {
+                QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
+            }
+            reply->deleteLater(); // Освобождаем память
+        });
+
+        // Обрабатываем ошибки сети
+        connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
+            QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
+        });
+
+
+        // Центрируем все задачи по верхнему краю контейнера
+        tasksLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
+    }
 }
 
 void MainWindow::updateAuthButtons()
