@@ -16,11 +16,8 @@
 #include <QJsonObject>
 #include <QMessageBox>
 
-bool isLoggedIn = false; // Глобальная переменная для проверки авторизации
-
 LoginWindow::LoginWindow(QWidget *parent)
     : QDialog(parent)
-    , authenticated(false)
     , socket(new QTcpSocket(this))  // Инициализация сокета
 {
     setWindowTitle("Авторизация");
@@ -138,75 +135,11 @@ void LoginWindow::on_regButton_clicked()
 //Нажатие на кнопку авторизации
 
 void LoginWindow::on_authLoginButton_clicked() {
-<<<<<<< HEAD
-    isLoggedIn = true;
-    authenticated = true;
-    // user_login_global = loginLineEdit->text();
-    accept();
-}
-
-// void LoginWindow::on_authLoginButton_clicked() {
-//     // Проверка на пустые поля
-//     if (loginLineEdit->text().isEmpty() || passwordLineEdit->text().isEmpty()) {
-//         QMessageBox::warning(this, "Ошибка", "Логин и пароль не могут быть пустыми");
-//         return;
-//     }
-
-//     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-//     QUrl url("http://localhost:8080"); // Замените на ваш URL
-//     QNetworkRequest request(url);
-//     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-
-//     // Создаем JSON объект с данными для авторизации
-//     QJsonObject json;
-//     json["action"] = "login"; // Указываем действие
-//     json["login"] = loginLineEdit->text(); // Замените на ваше поле логина
-//     json["password"] = passwordLineEdit->text(); // Замените на ваше поле пароля
-
-//     // Преобразуем JSON объект в документ и выводим его в консоль для отладки
-//     QJsonDocument jsonDoc(json);
-
-//     // Отправляем POST запрос
-//     QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
-
-//     // Обрабатываем ответ
-//     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-//         if (reply->error() == QNetworkReply::NoError) {
-//             QString response = QString::fromUtf8(reply->readAll()).trimmed();
-//             QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
-//             QJsonObject jsonObject = jsonResponse.object();
-
-//             // Проверяем сообщение от сервера
-//             QString message = jsonObject["message"].toString();
-//             if (message == "Login successful!") {
-//                 isLoggedIn = true; // Глобальная переменная для проверки авторизации
-//                 authenticated = true;
-//                 accept();  // Закрываем окно и разрешаем доступ
-//             } else {
-//                 QMessageBox::warning(this, "Ошибка", message);
-//             }
-//         } else {
-//             QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
-//         }
-//         reply->deleteLater(); // Освобождаем память
-//     });
-
-//     // Обрабатываем ошибки сети
-//     connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
-//         QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
-//     });
-// }
-
-
-
-// ЧТО ЗА ФУНКЦИЯ?? ГДЕ ПОДПИСЬ??? Я (РЕНАТА) БУДУ РУГАТЬСЯ!!!
-=======
     // Проверка на пустые поля
     if (loginLineEdit->text().isEmpty() || passwordLineEdit->text().isEmpty()) {
         QMessageBox::warning(this, "Ошибка", "Логин и пароль не могут быть пустыми");
         return;
     }
-    user_login_global =loginLineEdit->text();
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
     QUrl url("http://localhost:8080"); // Замените на ваш URL
     QNetworkRequest request(url);
@@ -233,13 +166,9 @@ void LoginWindow::on_authLoginButton_clicked() {
 
             // Проверяем сообщение от сервера
             QString message = jsonObject["message"].toString();
-            if (message == "Login successful!") {
+            if (message == "Login successful!") {                
+                user_login_global =loginLineEdit->text();
                 isLoggedIn = true; // Глобальная переменная для проверки авторизации
-                authenticated = true;
-                // Сохраняем адрес и порт нового сервера
-//                QJsonObject serverObject = jsonObject["server"].toObject();
-//                QString newHost = serverObject["host"].toString();
-//                int newPort = serverObject["port"].toInt();
 
                 // Сохраняем для использования в Task
                 smallServerUrl = jsonObject["server"].toString();
@@ -262,7 +191,6 @@ void LoginWindow::on_authLoginButton_clicked() {
 QString LoginWindow::getSmallServerUrl() const {
     return smallServerUrl;
 }
->>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
 
 void LoginWindow::connectToServer() {
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
