@@ -31,7 +31,7 @@ InviteWindow::InviteWindow(QWidget *parent)
     // Отступ
     inviteLayout->addSpacing(5);
 
-    // Стиль полей
+    // Стиль полей и кнопой
     QString lineEditStyle = "background-color: #e1f0db; color: black; font-size: 14px; outline: none; border: none;";
     QString buttonStyle = "background-color: #3b4f2a; color: white; outline: none; border: none; border-radius: 5px; padding: 10px;";
 

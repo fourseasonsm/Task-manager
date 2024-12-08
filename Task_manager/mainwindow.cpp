@@ -25,7 +25,7 @@ bool isLoggedIn = false;
 
 
 MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrollArea(this)) {
-    setWindowTitle("Main Window");
+    setWindowTitle("Task Manager");
     resize(1200, 700);
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);

@@ -11,7 +11,7 @@
 TaskWindow::TaskWindow(QWidget *parent)
     : QDialog(parent)
 {
-    setWindowTitle("Новая задача"); // Позже изменить
+    setWindowTitle("Задача"); // Позже изменить
     resize(800, 400);
     QVBoxLayout *taskLayout = new QVBoxLayout(this);
 
