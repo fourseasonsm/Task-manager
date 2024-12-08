@@ -68,9 +68,11 @@ private:
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
-    MainWindow mainWindow;
-    mainWindow.show();
+    // Нам больше не нужно это в функции писать, это в классе реализовано
+
+//    QApplication app(argc, argv);
+//    MainWindow mainWindow;
+//    mainWindow.show();
 
     // LoginWindow loginWindow;
     // if (loginWindow.exec() == QDialog::Accepted) {
@@ -91,8 +93,11 @@ int main(int argc, char *argv[])
     //     return a.exec();
     // }
 
-    app.exec();
+//    app.exec();
+
     MyApp rer(argc, argv);
+    MainWindow mainWindow;
+    mainWindow.show();
     rer.exec();
     return 0;
 }

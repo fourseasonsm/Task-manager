@@ -74,7 +74,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     headerLayout->addStretch(1);
 
     // Кнопка входа
-    QPushButton *authLoginButton = new QPushButton("Войти", this);
+    authLoginButton = new QPushButton("Войти", this);
     authLoginButton->setFixedSize(100, 35);
     authLoginButton->setStyleSheet(buttonStyle);
     // addShadowEffect(authLoginButton); // Добавляем тень
@@ -83,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     connect(authLoginButton, &QPushButton::clicked, this, &MainWindow::on_authLoginButton_clicked);
 
     // Кнопка выхода
-    QPushButton *logoutButton = new QPushButton("Выйти", this);
+    logoutButton = new QPushButton("Выйти", this);
     logoutButton->setFixedSize(100, 35);
     logoutButton->setStyleSheet(buttonStyle);
     logoutButton->hide(); // Скрываем кнопку выхода
@@ -93,7 +93,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     connect(logoutButton, &QPushButton::clicked, this, &MainWindow::on_logoutButton_clicked);
 
     // Кнопка регистрации
-    QPushButton *regButton = new QPushButton("Зарегистрироваться", this);
+    regButton = new QPushButton("Зарегистрироваться", this);
     regButton->setFixedSize(150, 35);
     regButton->setStyleSheet(buttonStyle);
     // addShadowEffect(regButton); // Добавляем тень
@@ -311,6 +311,7 @@ void MainWindow::on_authLoginButton_clicked()
     if (loginWindow->exec() == QDialog::Accepted) {
         smallServerUrl = loginWindow->getSmallServerUrl();
     }
+    updateAuthButtons();
 }
 
 // Нажатие на кнопку выхода
