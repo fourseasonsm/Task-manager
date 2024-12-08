@@ -17,6 +17,7 @@ public:
     QTcpSocket* getSocket();  // Метод для получения сокета
 
     static void addShadowEffect(QWidget *widget);
+    QString getSmallServerUrl() const;  // Геттер для smallServerUrl
 
 private slots:
     void connectToServer();
@@ -26,6 +27,7 @@ private slots:
 
 
 private:
+    QString smallServerUrl; // Поле для хранения адреса обрабатывающего серврера
     bool authenticated;
     QLineEdit *loginLineEdit;     // Declare login line edit
     QLineEdit *passwordLineEdit;  // Declare password line edit

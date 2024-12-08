@@ -5,7 +5,11 @@
 #include "projectwindow.h"
 #include "task.h"
 #include "taskwindow.h"
+<<<<<<< HEAD
 
+=======
+#include "global.h"
+>>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -13,11 +17,20 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QVBoxLayout>
-#include <QLineEdit>
 #include <QTextEdit>
 #include <QPushButton>
 #include <QFrame>
+<<<<<<< HEAD
 #include <QGridLayout>
+=======
+#include <QLabel>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QUrl>
+#include <QJsonDocument>
+#include <QJsonObject>
+>>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
 
 bool isLoggedIn = false;
 
@@ -74,6 +87,10 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     logoutButton->setFixedSize(100, 35);
     logoutButton->setStyleSheet(buttonStyle);
     logoutButton->hide(); // Скрываем кнопку выхода
+<<<<<<< HEAD
+=======
+    // addShadowEffect(logoutButton); // Добавляем тень
+>>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
 
     headerLayout->addWidget(logoutButton, 0, Qt::AlignRight);
     connect(logoutButton, &QPushButton::clicked, this, &MainWindow::on_logoutButton_clicked);
@@ -84,7 +101,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     regButton->setStyleSheet(buttonStyle);
 
     headerLayout->addWidget(regButton, 0, Qt::AlignRight);
-    connect(regButton, &QPushButton::clicked, this, &MainWindow::on_regButton_clicked);
+    connect(regButton, &QPushButton::clicked, this, &MainWindow::on_regButton_clicked);    connect(regButton, &QPushButton::clicked, this, &MainWindow::on_regButton_clicked);
 
 
     // Разделитель
@@ -116,7 +133,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     leftStripeLayout->addSpacing(30);
 
     // Имя пользователя
-    QLabel *user_name = new QLabel("Имя пользователя", bottomLeftStripe);
+    QLabel *user_name = new QLabel(user_login_global, bottomLeftStripe);
     user_name->setStyleSheet("color: black; font-size: 20px; text-decoration: underline;");
     leftStripeLayout->addWidget(user_name, 0, Qt::AlignTop | Qt::AlignHCenter);
 
@@ -185,10 +202,57 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     usersList->setStyleSheet("background-color: #e1f0db; color: black; font-size: 18px");
     usersList->setFixedSize(200, 300);
 
-    usersList->addItem("Рената");
-    usersList->addItem("Саша");
-    usersList->addItem("Никита");
-    usersList->addItem("Артем");
+    // Проверка на пустые поля
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QUrl url("http://localhost:8080"); // Замените на ваш URL
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    // Создаем JSON объект с данными для авторизации
+    QJsonObject json;
+    json["action"] = "list_of_user"; // Указываем действие
+
+    // Преобразуем JSON объект в документ и выводим его в консоль для отладки
+    QJsonDocument jsonDoc(json);
+
+    // Отправляем POST запрос
+    QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+
+    // Обрабатываем ответ
+    connect(reply, &QNetworkReply::finished, this, [ usersList, reply]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            QString response = QString::fromUtf8(reply->readAll()).trimmed();
+            QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+            QJsonObject jsonObject = jsonResponse.object();
+
+            // Проверяем сообщение от сервера
+            QString message = jsonObject["message"].toString();
+            QString list_of_user = jsonObject["list_of_users"].toString();
+            if (message == "List sended") {
+                QString temp = "";
+                for (int i =0;i<=list_of_user.size()-1;i++){
+                    if(list_of_user[i] != ','){
+                        temp = temp + list_of_user[i];
+                    }
+                    else {
+                        usersList->addItem(temp);
+                        temp = "";
+                    }
+                }
+                usersList->addItem(temp);
+            } else {
+                qDebug()<< message;
+            }
+        } else {
+            qDebug()<< "Ошибка"<< "Не удалось получить ответ от сервера: " << reply->errorString();
+        }
+        reply->deleteLater(); // Освобождаем память
+    });
+
+    // Обрабатываем ошибки сети
+    connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
+        QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
+    });
 
     // Добавляем в слой
     usersBoxLayout->addWidget(usersList, 0, Qt::AlignTop | Qt::AlignHCenter);
@@ -212,7 +276,11 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
 // Слот для создания новой задачи
 void MainWindow::createNewTask() {
     if (isLoggedIn == true) {
+<<<<<<< HEAD
         Task *newTask = new Task(this);
+=======
+        Task *newTask = new Task(smallServerUrl, this);
+>>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
 
         tasksLayout->addWidget(newTask);
 
@@ -245,9 +313,37 @@ void MainWindow::on_authLoginButton_clicked()
     updateAuthButtons();
 
     LoginWindow *loginWindow = new LoginWindow(this);
+<<<<<<< HEAD
     loginWindow->setAttribute(Qt::WA_DeleteOnClose);  // Автоматическое удаление окна при закрытии
     loginWindow->show();
 
+=======
+    //по сути то же самое, что show, только с show геттер не работает
+    if (loginWindow->exec() == QDialog::Accepted) {
+        smallServerUrl = loginWindow->getSmallServerUrl();
+    }
+    updateAuthButtons();
+}
+
+// Нажатие на кнопку выхода
+void MainWindow::on_logoutButton_clicked()
+{
+    isLoggedIn = false;
+    updateAuthButtons();
+}
+
+void MainWindow::updateAuthButtons()
+{
+    if (isLoggedIn) {
+        authLoginButton->hide();
+        regButton->hide();
+        logoutButton->show();
+    } else {
+        authLoginButton->show();
+        regButton->show();
+        logoutButton->hide();
+    }
+>>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
 }
 
 // Нажатие на кнопку для перехода к окну регистрации

@@ -3,9 +3,12 @@
 
 #include <QTcpSocket>
 #include <QDialog>
+#include <QString>
 
 class QLineEdit;
 class QPushButton;
+
+extern QString user_login_global; // глобальная переменная которая которая хранит юзера
 
 class RegistrationWindow : public QDialog
 {
@@ -18,7 +21,7 @@ public:
 
 private slots:
     void on_registerButton_clicked(); // Слот для обработки нажатия кнопки регистрации
-    void registerUser(); // Новый слот для регистрации
+    bool registerUser(); // Новый слот для регистрации
 
 private:
     QTcpSocket *socket;  // Используем переданный сокет

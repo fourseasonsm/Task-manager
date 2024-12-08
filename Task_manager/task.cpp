@@ -1,5 +1,6 @@
 #include "task.h"
 #include "taskwindow.h"
+
 #include <QVBoxLayout>
 #include <QLineEdit>
 #include <QTextEdit>
@@ -13,9 +14,9 @@
 #include <QJsonObject>
 #include <QMessageBox>
 
-
-Task::Task(QWidget *parent)
-    : QWidget(parent) {
+// создаем член класса, передав адрес обрабатывающего сервера
+Task::Task(const QString &smallServerUrl, QWidget *parent)
+    : QWidget(parent), smallServerUrl(smallServerUrl) {
 
     QVBoxLayout *layout = new QVBoxLayout(this);
 
@@ -74,6 +75,12 @@ Task::Task(QWidget *parent)
     saveButton->setStyleSheet(buttonStyle);
     buttonLayout->addWidget(saveButton);
 
+    // Кнопка закрытия окна (Рената может её облагородить)
+    QPushButton *closeButton = new QPushButton("✖", this); // Используем символ крестика
+    closeButton->setFixedSize(30, 30);
+    closeButton->setStyleSheet(buttonStyle);
+    buttonLayout->addWidget(closeButton);
+
     // Добавляем компоновку кнопок в рамку
     taskBoxLayout->addLayout(buttonLayout);
 
@@ -85,12 +92,13 @@ Task::Task(QWidget *parent)
     connect(doneButton, &QPushButton::clicked, this, &Task::markAsDone);
     connect(openButton, &QPushButton::clicked, this, &Task::openTask);
     connect(saveButton, &QPushButton::clicked, this, &Task::saveTask);
+    connect(closeButton, &QPushButton::clicked, this, &QWidget::close);
 }
 
 void Task::markAsDone() {
     // Проверка на пустые поля
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url("http://localhost:8079"); // Замените на ваш URL
+    QUrl url(smallServerUrl); // Замените на ваш URL
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -98,7 +106,7 @@ void Task::markAsDone() {
     QJsonObject json;
     json["action"] = "destruction";
     json["task_name"] = titleEdit->text(); // Указываем название задачи
-    json["task_text"] = descriptionEdit->placeholderText(); // Указываем название задачи
+    json["task_text"] = descriptionEdit->toPlainText(); // Указываем описание задачи
     // Преобразуем JSON объект в документ и выводим его в консоль для отладки
     QJsonDocument jsonDoc(json);
 
@@ -131,9 +139,6 @@ void Task::markAsDone() {
         QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
         this->deleteLater();
     });
-    TaskWindow *taskWindow = new TaskWindow(this);
-
-    taskWindow->show(); // Удаляем задачу
 }
 
 void Task::openTask() {
@@ -143,15 +148,20 @@ void Task::openTask() {
     taskWindow->show();
 }
 
+void Task::close() {
+
+   QWidget::close(); // Вызываем метод close базового класса
+}
+
 void Task::saveTask() {
     // Проверка на пустые поля
-    if (titleEdit->text().isEmpty() || descriptionEdit->placeholderText().isEmpty()) {
+    if (titleEdit->text().isEmpty() || descriptionEdit->toPlainText().isEmpty()) {
         QMessageBox::warning(this, "Ошибка", "Название и описание не могут быть пустыми");
         return;
     }
 
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url("http://localhost:8079"); // Замените на ваш URL
+    QUrl url(smallServerUrl); // Замените на ваш URL
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -159,7 +169,7 @@ void Task::saveTask() {
     QJsonObject json;
     json["action"] = "creation";
     json["task_name"] = titleEdit->text(); // Указываем название задачи
-    json["task_text"] = descriptionEdit->placeholderText(); // Указываем название задачи
+    json["task_text"] = descriptionEdit->toPlainText(); // Указываем название задачи
 
     // Преобразуем JSON объект в документ и выводим его в консоль для отладки
     QJsonDocument jsonDoc(json);
@@ -176,6 +186,7 @@ void Task::saveTask() {
 
             // Проверяем сообщение от сервера
             QString message = jsonObject["message"].toString();
+            qDebug() << message;
             if (message == "Task creation successful!") {
                 QMessageBox::information(this, "Задача сохранена", message);
             } else {

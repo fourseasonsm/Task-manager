@@ -26,6 +26,7 @@ set(PROJECT_SOURCES
         taskwindow.h taskwindow.cpp taskwindow.ui
         project.h project.cpp
         projectwindow.h projectwindow.cpp projectwindow.ui
+        global.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -42,6 +43,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         projectwindow.h projectwindow.cpp projectwindow.ui
         global.h
         invitewindow.h invitewindow.cpp invitewindow.ui
+
 
 
     )

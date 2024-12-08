@@ -8,7 +8,11 @@ def connecting_to_database():
         port='5432',
         database='small_server_database',
         user='postgres',
-        password=''
+        #пустой пароль не оставляем, postgre ругается
+        # Если у вас есть несколько баз данных на одном сервере PostgreSQL, 
+        # и один и тот же пользователь имеет доступ к ним, изменение пароля будет глобальным для этого пользователя, 
+        # а не для конкретной базы данных. 
+        password='miumiau' 
     )
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -103,7 +107,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
 
-def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, port=8079):
+def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, port=8081):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
     print(f'Starting server on port {port}...')

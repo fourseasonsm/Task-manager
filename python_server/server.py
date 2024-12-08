@@ -14,9 +14,9 @@ def connecting_to_database():
     return psycopg2.connect(
         host='127.0.0.1',
         port='5432',
-        database='task_manager',
+        database='server_database',
         user='postgres',
-        password='miumiau'
+        password='miu'
     )
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -60,6 +60,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             login = data.get('login')
             password = data.get('password')
             email = data.get('email')
+            # server_url = data.get ('server_url')
 
         except json.JSONDecodeError:
             self.send_response(400)  # Bad Request
@@ -75,62 +76,139 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             response = {
                 'message': 'Server live!',
             }
+        elif action == 'logout':
+            response = self.handle_login(login, password)
+
+        elif action == 'list_of_user':
+            response = self.online_users
         else:
             response = {
-                'message': 'Invalid action. Use "register" or "login".'
+                'message': 'Invalid action.'
             }
 
         self.wfile.write(json.dumps(response).encode('utf-8'))
-
-    def handle_register(self, login, password, email):
+    
+    def online_users(self):
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
-            cursor.execute("SELECT * FROM users WHERE login = %s", (login,))
-            if cursor.fetchone():
-                return {
-                    'message': 'Ошибка регистрации, такой логин уже существует'
-                }
-            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))  # Исправленный запрос
-            if cursor.fetchone():
-                return {
-                    'message': 'Ошибка регистрации, пользователь с такой почтой уже существует'
-                }
-            cursor.execute("INSERT INTO users (login, password, email) VALUES (%s, %s, %s)", (login, password, email))
-            connect.commit()
-            cursor.close()
-            connect.close()
+            cursor.execute("SELECT login FROM users WHERE is_online = true")
+            users_online_list = cursor.fetchall()  
+            cursor.close()  
+            connect.close()  
             return {
-                'message': 'Registration successful!', #менять нельзя, обрабатывается в клиенте
-                'login': login
+                'message': 'List sended',
+                'list_of_users': users_online_list,
             }
         except Exception as e:
-            connect.rollback()  # Отменяем транзакцию если она кривая
+            connect.rollback()  
             print(f"Возникла ошибка связанная с базой данных: {e}")
-            return {
-                'message': 'Регистрация не завершена, ошибка транзакции'
-            }
+            return {'message': 'Ошибка транзакции'}
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
+    
 
+    def handle_register(self, login, password, email):
+        connect = None
+        cursor = None
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
+        
+            # Проверка на существующий логин
+            cursor.execute("SELECT * FROM users WHERE login = %s", (login,))
+            if cursor.fetchone():
+                return {'message': 'Ошибка регистрации, такой логин уже существует'}
+        
+            # Проверка на существующую почту
+            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+            if cursor.fetchone():
+                return {'message': 'Ошибка регистрации, пользователь с такой почтой уже существует'}
+        
+            # Список доступных серверов
+            servers = [
+                {'host': '127.0.0.1', 'port': 8081},
+                {'host': '127.0.0.1', 'port': 8082},
+                {'host': '127.0.0.1', 'port': 8083},
+            ]
+        
+            # Выбор сервера для нового пользователя
+            assigned_server = assign_server(login, servers)
+            server_url = f"http://{assigned_server['host']}:{assigned_server['port']}"
+        
+            # Добавление нового пользователя с адресом сервера
+            cursor.execute(
+                "INSERT INTO users (login, password, email, server_url, isOnline) VALUES (%s, %s, %s, %s, false)",
+                (login, password, email, server_url)
+            )
+        
+            connect.commit()
+        
+            return {
+                'message': 'Registration successful!',  # менять нельзя, обрабатывается в клиенте
+                'login': login,
+            }
+        except Exception as e:
+            if connect:
+                connect.rollback()  # Отмена транзакции в случае ошибки
+            print(f"Возникла ошибка связанная с базой данных: {e}")
+            return {'message': 'Регистрация не завершена, ошибка транзакции'}
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
+    
     def handle_login(self, login, password):
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
-            cursor.execute("SELECT * FROM users WHERE login = %s AND password = %s", (login, password))
-            if cursor.fetchone():
-                # Распределение по серверам
-                servers = [
-                    {'host': '127.0.0.1', 'port': 8079},
-                    {'host': '127.0.0.1', 'port': 8081},
-                    {'host': '127.0.0.1', 'port': 8082},
-                ]
-                assigned_server = assign_server(login, servers)
+            # Изменяем запрос, чтобы выбрать server_url
+            cursor.execute("SELECT server_url FROM users WHERE login = %s AND password = %s", (login, password,))
+            
+            # Извлекаем результат
+            result = cursor.fetchone()
+            
+            if result:
+                server_url = result[0]  # Получаем server_url из результата
+                cursor.execute("UPDATE users SET isOnline = true WHERE login = %s", (login,))#,boolean is_online меняется на true если пользователь онлайн
+                connect.commit()               
                 return {
-                    'message': 'Login successful!',
-                    'login': login,
-                    'server': assigned_server
-                }
+                        'message': 'Login successful!',
+                        'login': login,
+                        'server': server_url
+                    }
             else:
                 return {'message': 'Неправильный логин или пароль'}
+        except Exception as e:
+            connect.rollback()
+            print(f"Ошибка базы данных: {e}")
+            return {'message': 'Вход не выполнен, ошибка транзакции'}
+        
+    def handle_logout(self, login):
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
+            # Изменяем запрос, чтобы выбрать server_url
+            cursor.execute("SELECT server_url FROM users WHERE login = %s", (login))
+            
+            # Извлекаем результат
+            result = cursor.fetchone()
+            if result:
+                server_url = result[0]  # Получаем server_url из результата
+                cursor.execute(
+                cursor.execute("UPDATE users SET isOnline = false WHERE login = %s", (login,))
+                )
+                connect.commit()
+                return {
+                        'message': 'Logout successful!'
+                    }          
+            else:
+                return {'message': 'Ошибка выхода'}
+            
         except Exception as e:
             connect.rollback()
             print(f"Ошибка базы данных: {e}")
