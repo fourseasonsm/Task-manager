@@ -34,11 +34,13 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             data = json.loads(post_data)
             action = data.get('action')
+            login = data.get('login')
             task_name = data.get('task_name')
             task_text = data.get('task_text')
             project_name = data.get('project_name')
             project_text = data.get('project_text')
-            user_id = "1"  # Assuming user_id is hardcoded for simplicity
+            user_id = data.get('user_id')
+            server_url = data.get('server_url')
 
         except json.JSONDecodeError:
             self.send_response(400) 
@@ -47,6 +49,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
         if action == 'creation':
             response = self.task_creation(task_name, task_text, user_id)
+        elif action == 'register':
+            response = self.handle_register(login, user_id, server_url)
         elif action == 'destruction':
             response = self.task_destruction(task_name, task_text, user_id)
         elif action == 'project_creation':
@@ -93,6 +97,26 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 cursor.close()
             if connect:
                 connect.close()
+
+    def handle_register(self, login, user_id, server_url):
+        connect = None
+        cursor = None
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
+            
+            logger.debug("Executing query: UPDATE users SET server_url = %s WHERE login = %s")
+            cursor.execute("INSERT INTO users_small_server (user_id, score, server_url, isOnline, login) VALUES (%s, 0, %s, false, %s)", (user_id, server_url, login))  
+            connect.commit()
+            logger.debug("Registration successful")
+            return {
+                'message': 'Registration successful!'
+            }
+        except Exception as e:
+            logger.error(f"Error during registration: {e}")
+            return {
+                'error': str(e)
+            }
 
     def task_destruction(self, task_name, task_text, user_id):
         connect = None
@@ -230,7 +254,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 connect.close()
 
 
-def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, port=8083):
+def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, port=8081):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
     logger.info(f'Starting server on port {port}...')
