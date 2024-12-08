@@ -20,9 +20,7 @@
 #include <QTextEdit>
 #include <QPushButton>
 #include <QFrame>
-<<<<<<< HEAD
 #include <QGridLayout>
-=======
 #include <QLabel>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
@@ -87,10 +85,6 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     logoutButton->setFixedSize(100, 35);
     logoutButton->setStyleSheet(buttonStyle);
     logoutButton->hide(); // Скрываем кнопку выхода
-<<<<<<< HEAD
-=======
-    // addShadowEffect(logoutButton); // Добавляем тень
->>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
 
     headerLayout->addWidget(logoutButton, 0, Qt::AlignRight);
     connect(logoutButton, &QPushButton::clicked, this, &MainWindow::on_logoutButton_clicked);
@@ -310,14 +304,11 @@ void MainWindow::createNewProject() {
 void MainWindow::on_authLoginButton_clicked()
 {
     isLoggedIn = true;
-    updateAuthButtons();
 
     LoginWindow *loginWindow = new LoginWindow(this);
-<<<<<<< HEAD
     loginWindow->setAttribute(Qt::WA_DeleteOnClose);  // Автоматическое удаление окна при закрытии
     loginWindow->show();
 
-=======
     //по сути то же самое, что show, только с show геттер не работает
     if (loginWindow->exec() == QDialog::Accepted) {
         smallServerUrl = loginWindow->getSmallServerUrl();

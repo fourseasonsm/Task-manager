@@ -16,11 +16,7 @@
 #include <QJsonObject>
 #include <QMessageBox>
 
-<<<<<<< HEAD
-// bool isLoggedIn = false; // Глобальная переменная для проверки авторизации
-=======
 bool isLoggedIn = false; // Глобальная переменная для проверки авторизации
->>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
 
 LoginWindow::LoginWindow(QWidget *parent)
     : QDialog(parent)
@@ -139,9 +135,7 @@ void LoginWindow::on_regButton_clicked()
     registerWindow->show(); // Отображается поверх окна логина, можно потом пофиксить
 }
 
-
-// ЧТО ЗА ФУНКЦИЯ?? ГДЕ ПОДПИСЬ??? Я (РЕНАТА) БУДУ РУГАТЬСЯ!!!
-
+//Нажатие на кнопку авторизации
 
 void LoginWindow::on_authLoginButton_clicked() {
 <<<<<<< HEAD
