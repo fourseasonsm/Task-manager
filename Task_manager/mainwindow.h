@@ -25,6 +25,7 @@ private slots:
     void on_regButton_clicked();
     void on_logoutButton_clicked();
     void updateAuthButtons();
+    void Load_list_of_tasks();
 
 private:
     QScrollArea *scrollArea; // Указатель на QScrollArea

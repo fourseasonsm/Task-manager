@@ -15,6 +15,8 @@ class Task : public QWidget {
 
 public:
     Task(const QString &smallServerUrl, QWidget *parent = nullptr); // Конструктор с параметром smallServerUrl
+    Task(const QString &smallServerUrl, QWidget *parent, QString task_name, QString task_text); // Конструктор с названием и текстом
+    QString task_id; // Член класса для хранения id таска
 
 private slots:
     void markAsDone(); // Слот для пометки задачи как выполненной
