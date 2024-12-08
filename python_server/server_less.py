@@ -36,6 +36,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             action = data.get('action')
             task_name = data.get('task_name')
             task_text = data.get('task_text')
+            project_name = data.get('project_name')
+            project_text = data.get('project_text')
             user_id = "1"  # Assuming user_id is hardcoded for simplicity
         except json.JSONDecodeError:
             self.send_response(400) 
@@ -46,6 +48,10 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             response = self.task_creation(task_name, task_text, user_id)
         elif action == 'destruction':
             response = self.task_destruction(task_name, task_text, user_id)
+        elif action == 'project_creation':
+            response == project_creation(self, project_name, project_text, user_id)
+        elif action == 'project_destruction':
+            response == project_destruction(self, project_name, project_text, user_id)
         else:
             response = {
                 'message': 'Invalid action. Use "creation" or "destruction".'
@@ -53,7 +59,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
         self.wfile.write(json.dumps(response).encode('utf-8'))
 
-    def task_creation(self, task_name, task_text, user_id):
+    def task_creation(self, task_name, task_text, user_id): #переделать с использованием таск id
         connect = None
         cursor = None
         try:
@@ -81,7 +87,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
 
-    def task_destruction(self, task_name, task_text, user_id):
+    def task_destruction(self, task_name, task_text, user_id): #переделать с использованием таск id
         connect = None
         cursor = None
         try:
@@ -96,6 +102,60 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             else:
                 return {
                     'message': 'Destruction failed. Task does not exist.'
+                }
+        except Exception as e:
+            return {
+                'error': str(e)
+            }
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
+
+def project_creation(self, project_name, project_text, user_id):
+        connect = None
+        cursor = None
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
+            cursor.execute("SELECT * FROM project WHERE project_name = %s", (project_name,))
+            if cursor.fetchone():
+                return {
+                    'message': 'Повтор проекта'
+                }
+            else:
+                cursor.execute("INSERT INTO project (project_name, project_text, owner) VALUES (%s, %s, %s)", (project_name, project_text, user_id))
+                connect.commit()
+                return {
+                    'message': 'Project creation successful!', #менять нельзя, обрабатывается в клиенте
+                    'project_name': project_name
+                }
+        except Exception as e:
+            return {
+                'error': str(e)
+            }
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
+
+def project_destruction(self, project_name, project_text, user_id):
+        connect = None
+        cursor = None
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
+            cursor.execute("DELETE FROM project WHERE project_name = %s AND project_text = %s AND owner= %s", (project_name, project_text, user_id))
+            connect.commit()
+            if cursor.rowcount > 0:
+                return {
+                    'message': 'Destruction successful!'
+                }
+            else:
+                return {
+                    'message': 'Destruction failed. Project does not exist.'
                 }
         except Exception as e:
             return {
