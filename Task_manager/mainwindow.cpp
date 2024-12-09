@@ -372,9 +372,6 @@ void MainWindow::Load_list_of_tasks()
                             counter++;
                         }
                     }
-                    Task *newTask = new Task(smallServerUrl, this,task_name_temp,temp);
-                    tasksLayout->addWidget(newTask);
-                    temp = "";
                     QMessageBox::information(this, "Загрузка задач", "Загрузка задач прошла успешно");
                 } else {
                     QMessageBox::warning(this, "Ошибка при при отправке задач", message);
