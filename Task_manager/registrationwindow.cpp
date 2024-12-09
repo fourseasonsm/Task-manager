@@ -14,7 +14,6 @@
 #include <QJsonObject>
 #include <QString>
 
-QString user_login_global="k";
 RegistrationWindow::RegistrationWindow(QWidget *parent, QTcpSocket *existingSocket)
     : QDialog(parent), socket(existingSocket)  // Инициализация переданным сокетом
 {

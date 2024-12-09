@@ -1,2 +1,6 @@
 .Client/
 build*/
+.venv/
+.vscode/
+python_server/server_less_3.py
+python_server/server_less_2.py

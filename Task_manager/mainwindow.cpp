@@ -5,11 +5,6 @@
 #include "projectwindow.h"
 #include "task.h"
 #include "taskwindow.h"
-<<<<<<< HEAD
-
-=======
-#include "global.h"
->>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -20,9 +15,7 @@
 #include <QTextEdit>
 #include <QPushButton>
 #include <QFrame>
-<<<<<<< HEAD
 #include <QGridLayout>
-=======
 #include <QLabel>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
@@ -30,10 +23,9 @@
 #include <QUrl>
 #include <QJsonDocument>
 #include <QJsonObject>
->>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
 
 bool isLoggedIn = false;
-
+QString user_login_global="NULL";
 // Цвета: Средний зеленый -  #a7bfa5, светлый зеленый - #e1f0db, темный зеленый - #3b4f2a
 
 
@@ -87,10 +79,6 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     logoutButton->setFixedSize(100, 35);
     logoutButton->setStyleSheet(buttonStyle);
     logoutButton->hide(); // Скрываем кнопку выхода
-<<<<<<< HEAD
-=======
-    // addShadowEffect(logoutButton); // Добавляем тень
->>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
 
     headerLayout->addWidget(logoutButton, 0, Qt::AlignRight);
     connect(logoutButton, &QPushButton::clicked, this, &MainWindow::on_logoutButton_clicked);
@@ -133,7 +121,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     leftStripeLayout->addSpacing(30);
 
     // Имя пользователя
-    QLabel *user_name = new QLabel(user_login_global, bottomLeftStripe);
+    user_name = new QLabel("Вход не был выполнен", bottomLeftStripe);
     user_name->setStyleSheet("color: black; font-size: 20px; text-decoration: underline;");
     leftStripeLayout->addWidget(user_name, 0, Qt::AlignTop | Qt::AlignHCenter);
 
@@ -276,11 +264,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
 // Слот для создания новой задачи
 void MainWindow::createNewTask() {
     if (isLoggedIn == true) {
-<<<<<<< HEAD
-        Task *newTask = new Task(this);
-=======
         Task *newTask = new Task(smallServerUrl, this);
->>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
 
         tasksLayout->addWidget(newTask);
 
@@ -309,28 +293,26 @@ void MainWindow::createNewProject() {
 // Нажатие на кнопку для перехода к окну авторизации
 void MainWindow::on_authLoginButton_clicked()
 {
-    isLoggedIn = true;
-    updateAuthButtons();
-
     LoginWindow *loginWindow = new LoginWindow(this);
-<<<<<<< HEAD
-    loginWindow->setAttribute(Qt::WA_DeleteOnClose);  // Автоматическое удаление окна при закрытии
-    loginWindow->show();
+    //Error закрывется не окно логина, а вообще все
+//    loginWindow->setAttribute(Qt::WA_DeleteOnClose);  // Автоматическое удаление окна при закрытии
 
-=======
     //по сути то же самое, что show, только с show геттер не работает
     if (loginWindow->exec() == QDialog::Accepted) {
         smallServerUrl = loginWindow->getSmallServerUrl();
     }
-    updateAuthButtons();
-    Load_list_of_tasks();
+    if (isLoggedIn) {
+        updateUserName(user_login_global); // Обновляем имя пользователя
+        updateAuthButtons();
+        Load_list_of_tasks();
+    }
+
 }
 
-// Нажатие на кнопку выхода
-void MainWindow::on_logoutButton_clicked()
-{
-    isLoggedIn = false;
-    updateAuthButtons();
+//Изменяет имя юзера на переданное
+void MainWindow::updateUserName(QString &newUserName) {
+    QString displayName = isLoggedIn ? newUserName : "Вход не был выполнен"; // Проверяем, авторизован ли пользователь
+    user_name->setText(displayName); // Устанавливаем новый текст для QLabel
 }
 
 void MainWindow::Load_list_of_tasks()
@@ -404,20 +386,6 @@ void MainWindow::Load_list_of_tasks()
     }
 }
 
-void MainWindow::updateAuthButtons()
-{
-    if (isLoggedIn) {
-        authLoginButton->hide();
-        regButton->hide();
-        logoutButton->show();
-    } else {
-        authLoginButton->show();
-        regButton->show();
-        logoutButton->hide();
-    }
->>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
-}
-
 // Нажатие на кнопку для перехода к окну регистрации
 void MainWindow::on_regButton_clicked()
 {
@@ -428,7 +396,9 @@ void MainWindow::on_regButton_clicked()
 // Нажатие на кнопку выхода
 void MainWindow::on_logoutButton_clicked()
 {
+    user_login_global = "NULL";
     isLoggedIn = false;
+    updateUserName(user_login_global);
     updateAuthButtons();
 }
 
