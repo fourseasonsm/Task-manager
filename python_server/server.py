@@ -2,6 +2,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import psycopg2
 import hashlib
+import requests
 import logging
 
 # Настройки логирования
@@ -13,6 +14,15 @@ def assign_server(user_identifier, servers):
     hash_value = int(hashlib.md5(user_identifier.encode()).hexdigest(), 16)
     return servers[hash_value % len(servers)]
 
+def send_user_data_to_server(server_url, login, user_id):
+    data = {'action': 'register', 'login': login, 'user_id': user_id, 'server_url': server_url}
+    json_data = json.dumps(data, indent=4)
+    try:
+        response = requests.post(server_url, data=json_data)
+        response.raise_for_status()  # Raise an exception for bad status codes
+    except requests.RequestException as e:
+        print(f"Error sending user data to server: {e}")
+
 # подключение через функцию, глобальная переменная выдает кучу ошибок которые я не хочу чинить
 def connecting_to_database():
     return psycopg2.connect(
@@ -20,7 +30,7 @@ def connecting_to_database():
         port='5432',
         database='server_database',
         user='postgres',
-        password='miu'
+        password='miumiau'
     )
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -144,12 +154,16 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         
             # Добавление нового пользователя с адресом сервера
             cursor.execute(
-                "INSERT INTO users (login, password, email, server_url, isOnline) VALUES (%s, %s, %s, %s, false)",
+                "INSERT INTO users (login, password, email, server_url, isOnline, scrore) VALUES (%s, %s, %s, %s, false, 0)",
                 (login, password, email, server_url)
             )
         
             connect.commit()
-        
+            
+            cursor.execute("SELECT user_id FROM users WHERE login = %s", (login,))
+            user_id = cursor.fetchone()[0]
+            send_user_data_to_server(server_url, login, user_id)
+
             return {
                 'message': 'Registration successful!',  # менять нельзя, обрабатывается в клиенте
                 'login': login,

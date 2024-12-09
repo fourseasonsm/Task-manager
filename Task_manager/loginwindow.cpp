@@ -16,11 +16,8 @@
 #include <QJsonObject>
 #include <QMessageBox>
 
-bool isLoggedIn = false; // Глобальная переменная для проверки авторизации
-
 LoginWindow::LoginWindow(QWidget *parent)
     : QDialog(parent)
-    , authenticated(false)
     , socket(new QTcpSocket(this))  // Инициализация сокета
 {
     setWindowTitle("Авторизация");
@@ -135,13 +132,14 @@ void LoginWindow::on_regButton_clicked()
     registerWindow->show(); // Отображается поверх окна логина, можно потом пофиксить
 }
 
+//Нажатие на кнопку авторизации
+
 void LoginWindow::on_authLoginButton_clicked() {
     // Проверка на пустые поля
     if (loginLineEdit->text().isEmpty() || passwordLineEdit->text().isEmpty()) {
         QMessageBox::warning(this, "Ошибка", "Логин и пароль не могут быть пустыми");
         return;
     }
-    user_login_global =loginLineEdit->text();
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
     QUrl url("http://localhost:8080"); // Замените на ваш URL
     QNetworkRequest request(url);
@@ -168,13 +166,9 @@ void LoginWindow::on_authLoginButton_clicked() {
 
             // Проверяем сообщение от сервера
             QString message = jsonObject["message"].toString();
-            if (message == "Login successful!") {
+            if (message == "Login successful!") {                
+                user_login_global =loginLineEdit->text();
                 isLoggedIn = true; // Глобальная переменная для проверки авторизации
-                authenticated = true;
-                // Сохраняем адрес и порт нового сервера
-//                QJsonObject serverObject = jsonObject["server"].toObject();
-//                QString newHost = serverObject["host"].toString();
-//                int newPort = serverObject["port"].toInt();
 
                 // Сохраняем для использования в Task
                 smallServerUrl = jsonObject["server"].toString();

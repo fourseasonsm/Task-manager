@@ -1,10 +1,10 @@
 #include "mainwindow.h"
 #include "loginwindow.h"
+#include "global.h"
 #include "registrationwindow.h"
 #include "projectwindow.h"
 #include "task.h"
 #include "taskwindow.h"
-#include "global.h"
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -15,6 +15,7 @@
 #include <QTextEdit>
 #include <QPushButton>
 #include <QFrame>
+#include <QGridLayout>
 #include <QLabel>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
@@ -23,20 +24,20 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-
-
+bool isLoggedIn = false;
+QString user_login_global="NULL";
 // Цвета: Средний зеленый -  #a7bfa5, светлый зеленый - #e1f0db, темный зеленый - #3b4f2a
 
 
 MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrollArea(this)) {
-    setWindowTitle("Main Window");
+    setWindowTitle("Task Manager");
     resize(1200, 700);
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
     // Белая шапка
-    QLabel *topPart = new QLabel();
-    topPart->setStyleSheet("background-color: white;");
+    QLabel *topPart = new QLabel("Task Manager");
+    topPart->setStyleSheet("background-color: white; color: black; font-weight: bold; font-size: 30px;");
     topPart->setFixedHeight(60);
     topPart->setAlignment(Qt::AlignCenter);
     mainLayout->addWidget(topPart);
@@ -44,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     QHBoxLayout *headerLayout = new QHBoxLayout(topPart); // Горизонтальный слой
 
     // Стиль кнопок
-    QString buttonStyle = "background-color: #3b4f2a; color: white; font-weight: bold; outline: none; border: none; border-radius: 5px; padding: 10px;";
+    QString buttonStyle = "background-color: #3b4f2a; color: white; font-size: 13px; font-weight: bold; outline: none; border: none; border-radius: 5px; padding: 10px;";
 
     // Кнопка создания задачи
     QPushButton *newTaskButton = new QPushButton("Создать задачу", this);
@@ -63,21 +64,12 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     connect(newProjectButton, &QPushButton::clicked, this, &MainWindow::createNewProject);
 
     // Добавляем пустое пространство слева для выравнивания
-    headerLayout->addStretch(1);
-
-    // Название проекта Task Manager
-    QLabel *title = new QLabel("Task Manager", this);
-    title->setStyleSheet("background-color: transparent; color: black; font-weight: bold; font-size: 30px;");
-    headerLayout->addWidget(title);
-
-    // Добавляем пустое пространство справа для выравнивания
-    headerLayout->addStretch(1);
+    headerLayout->addSpacerItem(new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum));
 
     // Кнопка входа
     authLoginButton = new QPushButton("Войти", this);
     authLoginButton->setFixedSize(100, 35);
     authLoginButton->setStyleSheet(buttonStyle);
-    // addShadowEffect(authLoginButton); // Добавляем тень
 
     headerLayout->addWidget(authLoginButton, 0, Qt::AlignRight);
     connect(authLoginButton, &QPushButton::clicked, this, &MainWindow::on_authLoginButton_clicked);
@@ -87,7 +79,6 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     logoutButton->setFixedSize(100, 35);
     logoutButton->setStyleSheet(buttonStyle);
     logoutButton->hide(); // Скрываем кнопку выхода
-    // addShadowEffect(logoutButton); // Добавляем тень
 
     headerLayout->addWidget(logoutButton, 0, Qt::AlignRight);
     connect(logoutButton, &QPushButton::clicked, this, &MainWindow::on_logoutButton_clicked);
@@ -96,11 +87,9 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     regButton = new QPushButton("Зарегистрироваться", this);
     regButton->setFixedSize(150, 35);
     regButton->setStyleSheet(buttonStyle);
-    // addShadowEffect(regButton); // Добавляем тень
 
     headerLayout->addWidget(regButton, 0, Qt::AlignRight);
     connect(regButton, &QPushButton::clicked, this, &MainWindow::on_regButton_clicked);    connect(regButton, &QPushButton::clicked, this, &MainWindow::on_regButton_clicked);
-
 
 
     // Разделитель
@@ -110,8 +99,6 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     separator->setLineWidth(2);
     separator->setStyleSheet("color: #3b4f2a;");
     mainLayout->addWidget(separator);
-
-
 
 
 
@@ -134,7 +121,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     leftStripeLayout->addSpacing(30);
 
     // Имя пользователя
-    QLabel *user_name = new QLabel(user_login_global, bottomLeftStripe);
+    user_name = new QLabel("Вход не был выполнен", bottomLeftStripe);
     user_name->setStyleSheet("color: black; font-size: 20px; text-decoration: underline;");
     leftStripeLayout->addWidget(user_name, 0, Qt::AlignTop | Qt::AlignHCenter);
 
@@ -303,23 +290,29 @@ void MainWindow::createNewProject() {
 
 }
 
-// Нажатие на кнопку для перехода к окну регистрации
+// Нажатие на кнопку для перехода к окну авторизации
 void MainWindow::on_authLoginButton_clicked()
 {
     LoginWindow *loginWindow = new LoginWindow(this);
+    //Error закрывется не окно логина, а вообще все
+//    loginWindow->setAttribute(Qt::WA_DeleteOnClose);  // Автоматическое удаление окна при закрытии
+
     //по сути то же самое, что show, только с show геттер не работает
     if (loginWindow->exec() == QDialog::Accepted) {
         smallServerUrl = loginWindow->getSmallServerUrl();
     }
-    updateAuthButtons();
-    Load_list_of_tasks();
+    if (isLoggedIn) {
+        updateUserName(user_login_global); // Обновляем имя пользователя
+        updateAuthButtons();
+        Load_list_of_tasks();
+    }
+
 }
 
-// Нажатие на кнопку выхода
-void MainWindow::on_logoutButton_clicked()
-{
-    isLoggedIn = false;
-    updateAuthButtons();
+//Изменяет имя юзера на переданное
+void MainWindow::updateUserName(QString &newUserName) {
+    QString displayName = isLoggedIn ? newUserName : "Вход не был выполнен"; // Проверяем, авторизован ли пользователь
+    user_name->setText(displayName); // Устанавливаем новый текст для QLabel
 }
 
 void MainWindow::Load_list_of_tasks()
@@ -396,6 +389,24 @@ void MainWindow::Load_list_of_tasks()
     }
 }
 
+// Нажатие на кнопку для перехода к окну регистрации
+void MainWindow::on_regButton_clicked()
+{
+    RegistrationWindow *registerWindow = new RegistrationWindow(this);
+    registerWindow->show();
+}
+
+// Нажатие на кнопку выхода
+void MainWindow::on_logoutButton_clicked()
+{
+    user_login_global = "NULL";
+    isLoggedIn = false;
+    updateUserName(user_login_global);
+    updateAuthButtons();
+}
+
+
+// Меняем кнопки "Войти" и "Зарегистрироваться" на "Выйти" и наоборот
 void MainWindow::updateAuthButtons()
 {
     if (isLoggedIn) {
@@ -407,12 +418,6 @@ void MainWindow::updateAuthButtons()
         regButton->show();
         logoutButton->hide();
     }
-}
 
-// Нажатие на кнопку для перехода к окну регистрации
-void MainWindow::on_regButton_clicked()
-{
-    RegistrationWindow *registerWindow = new RegistrationWindow(this);
-    registerWindow->show(); // Отображается поверх окна логина, можно потом пофиксить
+    this->update();
 }
-
