@@ -2,10 +2,14 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import psycopg2
 import hashlib
+import logging
+
+# Настройки логирования
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Функция для распределения по серверам
 def assign_server(user_identifier, servers):
-
     hash_value = int(hashlib.md5(user_identifier.encode()).hexdigest(), 16)
     return servers[hash_value % len(servers)]
 
@@ -45,7 +49,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         post_data = self.rfile.read(content_length)
         
         # Логируем входящие данные для отладки
-        print(f"Received data: {post_data}")
+        logger.debug(f"Received data: {post_data}")
         
         # Проверка на пустые данные
         if not post_data:
@@ -77,10 +81,9 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 'message': 'Server live!',
             }
         elif action == 'logout':
-            response = self.handle_login(login, password)
-
+            response = self.handle_logout(login)
         elif action == 'list_of_user':
-            response = self.online_users
+            response = self.online_users()
         else:
             response = {
                 'message': 'Invalid action.'
@@ -89,20 +92,21 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(response).encode('utf-8'))
     
     def online_users(self):
+        connect = None
+        cursor = None
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
-            cursor.execute("SELECT login FROM users WHERE is_online = true")
+            cursor.execute("SELECT login FROM users WHERE isOnline = true")
             users_online_list = cursor.fetchall()  
-            cursor.close()  
-            connect.close()  
             return {
                 'message': 'List sended',
                 'list_of_users': users_online_list,
             }
         except Exception as e:
-            connect.rollback()  
-            print(f"Возникла ошибка связанная с базой данных: {e}")
+            if connect:
+                connect.rollback()  
+            logger.error(f"Возникла ошибка связанная с базой данных: {e}")
             return {'message': 'Ошибка транзакции'}
         finally:
             if cursor:
@@ -110,7 +114,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
     
-
     def handle_register(self, login, password, email):
         connect = None
         cursor = None
@@ -154,7 +157,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         except Exception as e:
             if connect:
                 connect.rollback()  # Отмена транзакции в случае ошибки
-            print(f"Возникла ошибка связанная с базой данных: {e}")
+            logger.error(f"Возникла ошибка связанная с базой данных: {e}")
             return {'message': 'Регистрация не завершена, ошибка транзакции'}
         finally:
             if cursor:
@@ -163,18 +166,20 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 connect.close()
     
     def handle_login(self, login, password):
+        connect = None
+        cursor = None
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
             # Изменяем запрос, чтобы выбрать server_url
-            cursor.execute("SELECT server_url FROM users WHERE login = %s AND password = %s", (login, password,))
+            cursor.execute("SELECT server_url FROM users WHERE login = %s AND password = %s", (login, password))
             
             # Извлекаем результат
             result = cursor.fetchone()
             
             if result:
                 server_url = result[0]  # Получаем server_url из результата
-                cursor.execute("UPDATE users SET isOnline = true WHERE login = %s", (login,))#,boolean is_online меняется на true если пользователь онлайн
+                cursor.execute("UPDATE users SET isOnline = true WHERE login = %s", (login,))
                 connect.commit()               
                 return {
                         'message': 'Login successful!',
@@ -184,24 +189,30 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             else:
                 return {'message': 'Неправильный логин или пароль'}
         except Exception as e:
-            connect.rollback()
-            print(f"Ошибка базы данных: {e}")
+            if connect:
+                connect.rollback()
+            logger.error(f"Ошибка базы данных: {e}")
             return {'message': 'Вход не выполнен, ошибка транзакции'}
-        
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
+    
     def handle_logout(self, login):
+        connect = None
+        cursor = None
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
             # Изменяем запрос, чтобы выбрать server_url
-            cursor.execute("SELECT server_url FROM users WHERE login = %s", (login))
+            cursor.execute("SELECT server_url FROM users WHERE login = %s", (login,))
             
             # Извлекаем результат
             result = cursor.fetchone()
             if result:
                 server_url = result[0]  # Получаем server_url из результата
-                cursor.execute(
                 cursor.execute("UPDATE users SET isOnline = false WHERE login = %s", (login,))
-                )
                 connect.commit()
                 return {
                         'message': 'Logout successful!'
@@ -210,14 +221,20 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 return {'message': 'Ошибка выхода'}
             
         except Exception as e:
-            connect.rollback()
-            print(f"Ошибка базы данных: {e}")
+            if connect:
+                connect.rollback()
+            logger.error(f"Ошибка базы данных: {e}")
             return {'message': 'Вход не выполнен, ошибка транзакции'}
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
 
 def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, port=8080):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
-    print(f'Starting server on port {port}...')
+    logger.info(f'Starting server on port {port}...')
     httpd.serve_forever()
 
 if __name__ == "__main__":
