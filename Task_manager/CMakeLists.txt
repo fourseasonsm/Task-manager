@@ -41,6 +41,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         taskwindow.h taskwindow.cpp taskwindow.ui
         project.h project.cpp
         projectwindow.h projectwindow.cpp projectwindow.ui
+        global.h
+        invitewindow.h invitewindow.cpp invitewindow.ui
+
 
 
     )
