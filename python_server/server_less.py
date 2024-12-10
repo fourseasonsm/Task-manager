@@ -33,16 +33,18 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         
         try:
             data = json.loads(post_data)
+
             action = data.get('action')
             
             task_id = data.get('task_id')
-            login = data.get('login')
             task_name = data.get('task_name')
             task_text = data.get('task_text')
 
             project_id = data.get('project_id')
+            foreign_project_id = data.get('foreign_project_id')
             project_name = data.get('project_name')
             project_text = data.get('project_text')
+
 
             subtask_id = data.get('subtask_id')
             subtask_text = data.get('subtask_text')
@@ -50,7 +52,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             taker_id = data.get('taker_id')
 
             login = data.get('login')
-            user_id = data.get('user_id')
+            #user_id = data.get('user_id') я не уверена что оно нам в целом надо, проще с логином работать
             server_url = data.get('server_url')
 
         except json.JSONDecodeError:
@@ -79,21 +81,23 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
         self.wfile.write(json.dumps(response).encode('utf-8'))
 
-    def task_creation(self, task_name, task_text, login):
+    def task_creation(self, task_name, task_text, login): #РАБОТАЕТ
         connect = None
         cursor = None
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
+            #получаем логин и находим user_id тк хранить его как будто не очень удобно
             cursor.execute("SELECT user_id FROM users_small_server WHERE login = %s", (login,))
             user_id_list = cursor.fetchall()
             if not user_id_list:
                 return {'message': 'User not found'}
             user_id = user_id_list[0][0]
-            print(user_id)
+
             logger.debug("Executing query: INSERT INTO tasks (task_name, task_text, owner) VALUES (%s, %s, %s)")
             cursor.execute("INSERT INTO tasks (task_name, task_text, owner) VALUES (%s, %s, %s)", (task_name, task_text, user_id))
             connect.commit()
+
             # Берем максимальный ID, так как нумерация автоматическая и возрастающая
             cursor.execute("SELECT MAX(task_id) FROM tasks")
             task_id = cursor.fetchone()[0]
@@ -114,7 +118,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
 
-    def handle_register(self, login, user_id, server_url):
+    def handle_register(self, login, user_id, server_url): #РАБОТАЕТ обновление таблицы маленького сервера при добавлении к нему поьзователя
         connect = None
         cursor = None
         try:
@@ -134,7 +138,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 'error': str(e)
             }
 
-    def task_destruction(self, task_id):
+    def task_destruction(self, task_id):    #РАБОТАЕТ
         connect = None
         cursor = None
         try:
@@ -164,30 +168,65 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
 
-    def project_creation(self, project_name, project_text, login):
+    def project_creation(self, project_id, foreign_project_id, project_name, project_text, 
+                          login,
+                          subtask1_text, subtask1_weight,
+                          subtask2_text, subtask2_weight,
+                          subtask3_text, subtask3_weight
+                         ): #ВВЕСТИ ДВОЙНОЙ ID
         connect = None
         cursor = None
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
+
             cursor.execute("SELECT user_id FROM users_small_server WHERE login = %s", (login,))
             user_id_list = cursor.fetchall()
             if not user_id_list:
                 return {'message': 'User not found'}
             user_id = user_id_list[0][0]
+            #изначально foreign id иницилизируется обычным id, нужен он для однозначности проекта при пересылке
             logger.debug("Executing query: INSERT INTO project (project_name, project_text, owner) VALUES (%s, %s, %s)")
             cursor.execute("INSERT INTO project (project_name, project_text, owner) VALUES (%s, %s, %s)", (project_name, project_text, user_id))
             connect.commit()
 
             cursor.execute("SELECT MAX(project_id) FROM project")
             project_id = cursor.fetchone()[0]
+            
+            logger.debug("Executing query: INSERT INTO subtasks (project, subtask1_text, taker1_id, subtask1_weight) VALUES (%s, %s, %s, %s)")
+            cursor.execute("INSERT INTO subtasks (project, subtask1_text, taker1_id, subtask1_weight) VALUES (%s, %s, %s, %s)", (project_id, subtask1_text, user_id, subtask1_weight))
+            connect.commit()
+            
+            cursor.execute("SELECT subtask1_id FROM subtasks WHERE project = %s", (project_id,))
+            subtask1_id_list = cursor.fetchall()
+            subtask1_id = subtask1_id_list[0][0]
+
+            logger.debug("Executing query: INSERT INTO subtasks (project, subtask2_text, taker2_id, subtask2_weight) VALUES (%s, %s, %s, %s)")
+            cursor.execute("INSERT INTO subtasks (project, subtask2_text, taker2_id, subtask2_weight) VALUES (%s, %s, %s, %s)", (project_id, subtask2_text, user_id, subtask2_weight))
+            connect.commit()
+
+            cursor.execute("SELECT subtask2_id FROM subtasks WHERE project = %s", (project_id,))
+            subtask2_id_list = cursor.fetchall()
+            subtask2_id = subtask2_id_list[0][0]
+
+            logger.debug("Executing query: INSERT INTO subtasks (project, subtask3_text, taker3_id, subtask3_weight) VALUES (%s, %s, %s, %s)")
+            cursor.execute("INSERT INTO subtasks (project, subtask3_text, taker3_id, subtask3_weight) VALUES (%s, %s, %s, %s)", (project_id, subtask3_text, user_id, subtask3_weight))
+            connect.commit()
+
+            cursor.execute("SELECT subtask3_id FROM subtasks WHERE project = %s", (project_id,))
+            subtask3_id_list = cursor.fetchall()
+            subtask3_id = subtask3_id_list[0][0]
 
             logger.debug("Project creation successful")
 
             return {
                 'message': 'Project creation successful!', #менять нельзя, обрабатывается в клиенте
                 'project_name': project_name,
-                'project_id': project_id
+                'project_id': project_id,
+                'foreign_project_id': foreign_project_id,
+                'subtask1_id': subtask1_id,
+                'subtask2_id': subtask2_id,
+                'subtask3_id': subtask3_id
             }
         
         except Exception as e:
@@ -201,21 +240,32 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
 
-    def project_destruction(self, project_name, project_text, login): #ОНО НЕ РАБОЧЕЕ НАДО ПЕРЕДЕЛАТЬ но для этого нужны запросы к серверам
+
+    def project_destruction(self, project_id, foreign_project_id, login): #будет удалять проект ТОЛЬКО если его удаляет хозяин, если не хозяин ему нельзя удалять
         connect = None
         cursor = None
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
+
             cursor.execute("SELECT user_id FROM users_small_server WHERE login = %s", (login,))
             user_id_list = cursor.fetchall()
             if not user_id_list:
                 return {'message': 'User not found'}
             user_id = user_id_list[0][0]
+
             #вот тут должно быть получение информации о том что мы поудаляли допзадачи на остальных серверах
+            cursor.execute("SELECT owner FROM projects WHERE project_id = %s AND foreign_project_id =%s ", (project_id, foreign_project_id))
+            owner_list = cursor.fetchall()
+            owner = owner_list[0][0]
+            if (owner != user_id): 
+                return {'message': 'It is not your project'}
+
+
             logger.debug("Executing query: DELETE FROM project WHERE project_name = %s AND project_text = %s AND owner = %s")
             cursor.execute("DELETE FROM project WHERE project_name = %s AND project_text = %s AND owner = %s", (project_name, project_text, user_id))
             connect.commit()
+
             if cursor.rowcount > 0:
                 logger.debug("Project destruction successful")
                 return {
@@ -237,7 +287,15 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
 
-    def add_subtask(self, project_id, taker_id, subtask_id, subtask_text, subtask_weight): #тут функция меняет в бд взявшего подзадачу, все еще вопрос с индексацией проекта
+    def delete_project_copy(self, taker_id, owner, project_id, foreign_project_id):
+        connect = None
+        cursor = None
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
+
+
+    def add_subtask(self, project_id, taker_id, subtask_id): #тут функция меняет в бд взявшего подзадачу, все еще вопрос с индексацией проекта
         connect = None
         cursor = None
         try:
@@ -274,7 +332,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
 
-    def get_info(self, login):
+    def get_info(self, login):   #РАБОТАЕТ вопрос с распилрм ответа у Артема
         connect = None
         cursor = None
         try:

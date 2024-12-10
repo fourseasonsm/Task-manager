@@ -27,6 +27,7 @@ set(PROJECT_SOURCES
         project.h project.cpp
         projectwindow.h projectwindow.cpp projectwindow.ui
         global.h
+        invitewindow.h invitewindow.cpp invitewindow.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

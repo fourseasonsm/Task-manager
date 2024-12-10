@@ -124,7 +124,39 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 cursor.close()
             if connect:
                 connect.close()
-    
+
+    def user_info (self, login):
+        connect = None
+        cursor = None
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
+            cursor.execute("SELECT isOnline FROM users WHERE login = %s", (login,))
+            status_list = cursor.fetchall()
+            user_status = status_list[0][0]
+            if (user_status == 'f'):
+                return {
+                    'message': 'User is offline'
+                }
+            else:
+                cursor.execute("SELECT server_url FROM users WHERE login = %s", (login,))
+                user_info_list = cursor.fetchall()  
+                return {
+                    'message': 'User info sended',
+                    'list_of_users': user_info_list,
+                }
+        except Exception as e:
+            if connect:
+                connect.rollback()  
+            logger.error(f"Возникла ошибка связанная с базой данных: {e}")
+            return {'message': 'Ошибка транзакции'}
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
+
+
     def handle_register(self, login, password, email):
         connect = None
         cursor = None
