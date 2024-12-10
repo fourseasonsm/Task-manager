@@ -16,11 +16,13 @@
 #include <QJsonObject>
 #include <QMessageBox>
 
+<<<<<<< HEAD
 // bool isLoggedIn = false; // Уже определена в mainwindow
 
+=======
+>>>>>>> 4f82cb32e91a6a89c333c81c3041a59712196a8d
 LoginWindow::LoginWindow(QWidget *parent)
     : QDialog(parent)
-    , authenticated(false)
     , socket(new QTcpSocket(this))  // Инициализация сокета
 {
     setWindowTitle("Авторизация");
@@ -135,17 +137,22 @@ void LoginWindow::on_regButton_clicked()
     registerWindow->show(); // Отображается поверх окна логина, можно потом пофиксить
 }
 
+<<<<<<< HEAD
 
 // ЧТО ЗА ФУНКЦИЯ?? ГДЕ ПОДПИСЬ??? Я (РЕНАТА) БУДУ РУГАТЬСЯ!!!
 
 void LoginWindow::on_authLoginButton_clicked() {
 
+=======
+//Нажатие на кнопку авторизации
+
+void LoginWindow::on_authLoginButton_clicked() {
+>>>>>>> 4f82cb32e91a6a89c333c81c3041a59712196a8d
     // Проверка на пустые поля
     if (loginLineEdit->text().isEmpty() || passwordLineEdit->text().isEmpty()) {
         QMessageBox::warning(this, "Ошибка", "Логин и пароль не могут быть пустыми");
         return;
     }
-    user_login_global =loginLineEdit->text();
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
     QUrl url("http://localhost:8080"); // Замените на ваш URL
     QNetworkRequest request(url);
@@ -172,13 +179,9 @@ void LoginWindow::on_authLoginButton_clicked() {
 
             // Проверяем сообщение от сервера
             QString message = jsonObject["message"].toString();
-            if (message == "Login successful!") {
+            if (message == "Login successful!") {                
+                user_login_global =loginLineEdit->text();
                 isLoggedIn = true; // Глобальная переменная для проверки авторизации
-                authenticated = true;
-                // Сохраняем адрес и порт нового сервера
-//                QJsonObject serverObject = jsonObject["server"].toObject();
-//                QString newHost = serverObject["host"].toString();
-//                int newPort = serverObject["port"].toInt();
 
                 // Сохраняем для использования в Task
                 smallServerUrl = jsonObject["server"].toString();

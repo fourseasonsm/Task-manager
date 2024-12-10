@@ -14,7 +14,6 @@
 #include <QJsonObject>
 #include <QString>
 
-QString user_login_global="k";
 RegistrationWindow::RegistrationWindow(QWidget *parent, QTcpSocket *existingSocket)
     : QDialog(parent), socket(existingSocket)  // Инициализация переданным сокетом
 {
@@ -134,6 +133,7 @@ void RegistrationWindow::on_registerButton_clicked() {
 
             // Проверяем сообщение от сервера
             QString message = jsonObject["message"].toString();
+            qDebug() << message;
             if (message == "Registration successful!") {
                 QMessageBox::information(this, "Регистрация", "Регистрация прошла успешно");
             } else {

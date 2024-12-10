@@ -34,7 +34,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             data = json.loads(post_data)
             action = data.get('action')
-            username = data.get('username')
+            username = data.get('login')
             password = data.get('password')
         except json.JSONDecodeError:
             self.send_response(400)  # Bad Request
@@ -50,15 +50,15 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             else:
                 users[username] = password
                 response = {
-                    'message': 'Registration successful!',
-                    'username': username
+                    'message': 'Registration successful!'
                 }
         elif action == 'login':
             users_online[username]= username
             if username in users and users[username] == password:
                 response = {
                     'message': 'Login successful!',
-                    'username': username
+                    'username': username,
+                    'server' : 'http://localhost:8079'
                 }
             else:
                 print(username)

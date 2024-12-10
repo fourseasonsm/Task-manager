@@ -5,8 +5,11 @@
 #include "projectwindow.h"
 #include "task.h"
 #include "taskwindow.h"
+<<<<<<< HEAD
 
 #include "global.h"
+=======
+>>>>>>> 4f82cb32e91a6a89c333c81c3041a59712196a8d
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -17,7 +20,10 @@
 #include <QTextEdit>
 #include <QPushButton>
 #include <QFrame>
+<<<<<<< HEAD
 
+=======
+>>>>>>> 4f82cb32e91a6a89c333c81c3041a59712196a8d
 #include <QGridLayout>
 #include <QLabel>
 #include <QNetworkAccessManager>
@@ -28,7 +34,7 @@
 #include <QJsonObject>
 
 bool isLoggedIn = false;
-
+QString user_login_global="NULL";
 // Цвета: Средний зеленый -  #a7bfa5, светлый зеленый - #e1f0db, темный зеленый - #3b4f2a
 
 
@@ -82,7 +88,10 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     logoutButton->setFixedSize(100, 35);
     logoutButton->setStyleSheet(buttonStyle);
     logoutButton->hide(); // Скрываем кнопку выхода
+<<<<<<< HEAD
     // addShadowEffect(logoutButton); // Добавляем тень
+=======
+>>>>>>> 4f82cb32e91a6a89c333c81c3041a59712196a8d
 
     headerLayout->addWidget(logoutButton, 0, Qt::AlignRight);
     connect(logoutButton, &QPushButton::clicked, this, &MainWindow::on_logoutButton_clicked);
@@ -125,7 +134,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     leftStripeLayout->addSpacing(30);
 
     // Имя пользователя
-    QLabel *user_name = new QLabel(user_login_global, bottomLeftStripe);
+    user_name = new QLabel("Вход не был выполнен", bottomLeftStripe);
     user_name->setStyleSheet("color: black; font-size: 20px; text-decoration: underline;");
     leftStripeLayout->addWidget(user_name, 0, Qt::AlignTop | Qt::AlignHCenter);
 
@@ -297,25 +306,108 @@ void MainWindow::createNewProject() {
 // Нажатие на кнопку для перехода к окну авторизации
 void MainWindow::on_authLoginButton_clicked()
 {
-    isLoggedIn = true;
-    updateAuthButtons();
-
     LoginWindow *loginWindow = new LoginWindow(this);
+<<<<<<< HEAD
+=======
+    //Error закрывется не окно логина, а вообще все
+//    loginWindow->setAttribute(Qt::WA_DeleteOnClose);  // Автоматическое удаление окна при закрытии
+>>>>>>> 4f82cb32e91a6a89c333c81c3041a59712196a8d
 
     //по сути то же самое, что show, только с show геттер не работает
     if (loginWindow->exec() == QDialog::Accepted) {
         smallServerUrl = loginWindow->getSmallServerUrl();
     }
-    updateAuthButtons();
+    if (isLoggedIn) {
+        updateUserName(user_login_global); // Обновляем имя пользователя
+        updateAuthButtons();
+        Load_list_of_tasks();
+    }
+
 }
 
-// Нажатие на кнопку выхода
-void MainWindow::on_logoutButton_clicked()
+//Изменяет имя юзера на переданное
+void MainWindow::updateUserName(QString &newUserName) {
+    QString displayName = isLoggedIn ? newUserName : "Вход не был выполнен"; // Проверяем, авторизован ли пользователь
+    user_name->setText(displayName); // Устанавливаем новый текст для QLabel
+}
+
+<<<<<<< HEAD
+=======
+void MainWindow::Load_list_of_tasks()
 {
-    isLoggedIn = false;
-    updateAuthButtons();
+    if (isLoggedIn) {
+        // Проверка на пустые поля
+        QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+        QUrl url(smallServerUrl); // Замените на ваш URL
+        QNetworkRequest request(url);
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+        // Создаем JSON объект с данными для авторизации
+        QJsonObject json;
+        json["action"] = "list_of_tasks";
+        json["login"] = user_login_global; // Замените на ваше поле логина
+        // Преобразуем JSON объект в документ и выводим его в консоль для отладки
+        QJsonDocument jsonDoc(json);
+
+        // Отправляем POST запрос
+        QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+
+        // Обрабатываем ответ
+        connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+            if (reply->error() == QNetworkReply::NoError) {
+                QString response = QString::fromUtf8(reply->readAll()).trimmed();
+                QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+                QJsonObject jsonObject = jsonResponse.object();
+
+                // Проверяем сообщение от сервера
+                QString message = jsonObject["message"].toString();
+                QString list_of_tasks = jsonObject["list_of_tasks"].toString();
+                int counter = 0;
+                if (message == "List sended") {
+                    QString temp = "";
+                    QString task_name_temp;
+                    for (int i =0;i<=list_of_tasks.size()-1;i++){
+                        if(list_of_tasks[i] != ','){
+                            temp = temp + list_of_tasks[i];
+                        }
+                        else {
+                            if (counter % 2 == 0){
+                                task_name_temp = temp;
+                                temp = "";
+                            }
+                            else {
+                                Task *newTask = new Task(smallServerUrl, this,task_name_temp,temp);
+                                tasksLayout->addWidget(newTask);
+                                temp = "";
+                            }
+                            counter++;
+                        }
+                    }
+                    Task *newTask = new Task(smallServerUrl, this,task_name_temp,temp);
+                    tasksLayout->addWidget(newTask);
+                    temp = "";
+                    QMessageBox::information(this, "Загрузка задач", "Загрузка задач прошла успешно");
+                } else {
+                    QMessageBox::warning(this, "Ошибка при при отправке задач", message);
+                }
+            } else {
+                QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
+            }
+            reply->deleteLater(); // Освобождаем память
+        });
+
+        // Обрабатываем ошибки сети
+        connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
+            QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
+        });
+
+
+        // Центрируем все задачи по верхнему краю контейнера
+        tasksLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
+    }
 }
 
+>>>>>>> 4f82cb32e91a6a89c333c81c3041a59712196a8d
 // Нажатие на кнопку для перехода к окну регистрации
 void MainWindow::on_regButton_clicked()
 {
@@ -323,6 +415,18 @@ void MainWindow::on_regButton_clicked()
     registerWindow->show();
 }
 
+<<<<<<< HEAD
+=======
+// Нажатие на кнопку выхода
+void MainWindow::on_logoutButton_clicked()
+{
+    user_login_global = "NULL";
+    isLoggedIn = false;
+    updateUserName(user_login_global);
+    updateAuthButtons();
+}
+
+>>>>>>> 4f82cb32e91a6a89c333c81c3041a59712196a8d
 
 // Меняем кнопки "Войти" и "Зарегистрироваться" на "Выйти" и наоборот
 void MainWindow::updateAuthButtons()
