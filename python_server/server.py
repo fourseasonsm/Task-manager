@@ -92,7 +92,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             }
         elif action == 'logout':
             response = self.handle_logout(login)
-        elif action == 'list_of_user':
+        elif action == 'list_of_users':
             response = self.online_users()
         else:
             response = {
@@ -108,14 +108,16 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             connect = connecting_to_database()
             cursor = connect.cursor()
             cursor.execute("SELECT login FROM users WHERE isOnline = true")
-            users_online_list = cursor.fetchall()  
+            users_online_list = cursor.fetchall()
+            print(users_online_list)
+            # [('Maximka987!',), ('papa',), ('lol',), ('pap',)]
             return {
                 'message': 'List sended',
-                'list_of_users': users_online_list,
+                'list_of_users': [user[0] for user in users_online_list],
             }
         except Exception as e:
             if connect:
-                connect.rollback()  
+                connect.rollback()
             logger.error(f"Возникла ошибка связанная с базой данных: {e}")
             return {'message': 'Ошибка транзакции'}
         finally:
@@ -123,7 +125,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 cursor.close()
             if connect:
                 connect.close()
-    
+
     def handle_register(self, login, password, email):
         connect = None
         cursor = None
@@ -154,7 +156,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         
             # Добавление нового пользователя с адресом сервера
             cursor.execute(
-                "INSERT INTO users (login, password, email, server_url, isOnline, scrore) VALUES (%s, %s, %s, %s, false, 0)",
+                "INSERT INTO users (login, password, email, server_url, isOnline, score) VALUES (%s, %s, %s, %s, false, 0)",
                 (login, password, email, server_url)
             )
         
@@ -221,11 +223,12 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             cursor = connect.cursor()
             # Изменяем запрос, чтобы выбрать server_url
             cursor.execute("SELECT server_url FROM users WHERE login = %s", (login,))
-            
+            print ("che")
             # Извлекаем результат
             result = cursor.fetchone()
+            print (login)
             if result:
-                server_url = result[0]  # Получаем server_url из результата
+                # server_url = result[0]  # Получаем server_url из результата
                 cursor.execute("UPDATE users SET isOnline = false WHERE login = %s", (login,))
                 connect.commit()
                 return {

@@ -11,6 +11,7 @@
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QListWidget>
 
 class LoginWindow; // Объявление для работы с LoginWindow
 
@@ -33,6 +34,7 @@ private:
 =======
     void on_logoutButton_clicked();
     void Load_list_of_tasks();
+    void updateUsersOnline(); 
 
 private:
     //Поле для хранения имени вошедшего юзера
@@ -45,6 +47,7 @@ private:
     QScrollArea *scrollArea; // Указатель на QScrollArea
     QVBoxLayout *tasksLayout; // Layout для хранения задач
     QVBoxLayout *centerStripeLayout; // Вертикальный слой для центральной полосы
+    QListWidget *usersList;
 
     // Указатели на кнопки
     QPushButton *authLoginButton;
