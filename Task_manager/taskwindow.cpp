@@ -15,6 +15,10 @@ TaskWindow::TaskWindow(QWidget *parent)
     resize(800, 400);
     QVBoxLayout *taskLayout = new QVBoxLayout(this);
 
+    // Стили
+    QString lineEditStyle = "background-color: white; color: black; outline: none; border: none;";
+    QString buttonStyle = "background-color: #3b4f2a; color: white; outline: none; border: none; border-radius: 5px; padding: 10px;";
+
     // Белая шапка
     QLabel *taskTopPart = new QLabel();
     taskTopPart->setStyleSheet("background-color: white;");
@@ -25,9 +29,9 @@ TaskWindow::TaskWindow(QWidget *parent)
     QHBoxLayout *headerLayout = new QHBoxLayout(taskTopPart); // Горизонтальный слой
 
     // Название проекта
-    QLabel *title = new QLabel("Новая задача", this);
-    title->setStyleSheet("background-color: transparent; color: black; font-weight: bold; font-size: 25px;");
-    headerLayout->addWidget(title);
+    title = new QLineEdit("Новая задача", this);
+    title->setStyleSheet(lineEditStyle + "font-size: 20px;");
+    headerLayout->addWidget(title, 0, Qt::AlignTop);
 
     // Добавляем пустое пространство справа для выравнивания
     headerLayout->addStretch(1);
@@ -41,12 +45,54 @@ TaskWindow::TaskWindow(QWidget *parent)
     taskLayout->addWidget(taskSeparator);
 
     // Текст "Описание задачи"
-    QLabel *description_tsk = new QLabel("Описание задачи");
-    description_tsk->setStyleSheet("background-color: transparent; color: black; font-size: 15px;");
-    taskLayout->addWidget(description_tsk, 0, Qt::AlignTop | Qt::AlignLeft);
+    description_tsk = new QTextEdit("Описание задачи");
+    description_tsk->setStyleSheet(lineEditStyle + "font-size: 15px;");
+    description_tsk->setMaximumHeight(150);
+    taskLayout->addWidget(description_tsk);
 
+    taskLayout->addItem(new QSpacerItem(10, 20, QSizePolicy::Minimum, QSizePolicy::Expanding));
+
+    // Горизонтальный слой для кнопок
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    buttonLayout->addStretch(); // Заполнитель слева для выравнивания кнопки вправо
+
+    // Создаём кнопку "Сохранить"
+    QPushButton *saveButton = new QPushButton("Сохранить", this);
+    saveButton->setStyleSheet(buttonStyle);
+    saveButton->setFixedSize(100, 40);
+    buttonLayout->addWidget(saveButton);
+
+    // Создаём кнопку "Выполнить"
+    QPushButton *doneButton = new QPushButton("Выполнить", this);
+    doneButton->setStyleSheet(buttonStyle);
+    doneButton->setFixedSize(100, 40);
+    buttonLayout->addWidget(doneButton);
+
+    // Создаём кнопку "✖"
+    QPushButton *closeButton = new QPushButton("✖", this); // Используем символ крестика
+    closeButton->setFixedSize(40, 40);
+    closeButton->setStyleSheet(buttonStyle);
+    buttonLayout->addWidget(closeButton);
+
+    taskLayout->addLayout(buttonLayout);
+
+    connect(saveButton, &QPushButton::clicked, this, &TaskWindow::on_saveButton_clicked);
+    connect(doneButton, &QPushButton::clicked, this, &TaskWindow::on_doneButton_clicked);
+    connect(closeButton, &QPushButton::clicked, this, &TaskWindow::on_closeButton_clicked);
 }
 
 TaskWindow::~TaskWindow()
 {
+}
+
+void TaskWindow::on_saveButton_clicked() {
+
+}
+
+void TaskWindow::on_doneButton_clicked() {
+
+}
+
+void TaskWindow::on_closeButton_clicked() {
+
 }

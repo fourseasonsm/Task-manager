@@ -5,6 +5,11 @@
 #include "projectwindow.h"
 #include "task.h"
 #include "taskwindow.h"
+<<<<<<< HEAD
+
+#include "global.h"
+=======
+>>>>>>> 4f82cb32e91a6a89c333c81c3041a59712196a8d
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -15,6 +20,10 @@
 #include <QTextEdit>
 #include <QPushButton>
 #include <QFrame>
+<<<<<<< HEAD
+
+=======
+>>>>>>> 4f82cb32e91a6a89c333c81c3041a59712196a8d
 #include <QGridLayout>
 #include <QLabel>
 #include <QNetworkAccessManager>
@@ -79,6 +88,10 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     logoutButton->setFixedSize(100, 35);
     logoutButton->setStyleSheet(buttonStyle);
     logoutButton->hide(); // Скрываем кнопку выхода
+<<<<<<< HEAD
+    // addShadowEffect(logoutButton); // Добавляем тень
+=======
+>>>>>>> 4f82cb32e91a6a89c333c81c3041a59712196a8d
 
     headerLayout->addWidget(logoutButton, 0, Qt::AlignRight);
     connect(logoutButton, &QPushButton::clicked, this, &MainWindow::on_logoutButton_clicked);
@@ -294,8 +307,11 @@ void MainWindow::createNewProject() {
 void MainWindow::on_authLoginButton_clicked()
 {
     LoginWindow *loginWindow = new LoginWindow(this);
+<<<<<<< HEAD
+=======
     //Error закрывется не окно логина, а вообще все
 //    loginWindow->setAttribute(Qt::WA_DeleteOnClose);  // Автоматическое удаление окна при закрытии
+>>>>>>> 4f82cb32e91a6a89c333c81c3041a59712196a8d
 
     //по сути то же самое, что show, только с show геттер не работает
     if (loginWindow->exec() == QDialog::Accepted) {
@@ -315,6 +331,8 @@ void MainWindow::updateUserName(QString &newUserName) {
     user_name->setText(displayName); // Устанавливаем новый текст для QLabel
 }
 
+<<<<<<< HEAD
+=======
 void MainWindow::Load_list_of_tasks()
 {
     if (isLoggedIn) {
@@ -389,6 +407,7 @@ void MainWindow::Load_list_of_tasks()
     }
 }
 
+>>>>>>> 4f82cb32e91a6a89c333c81c3041a59712196a8d
 // Нажатие на кнопку для перехода к окну регистрации
 void MainWindow::on_regButton_clicked()
 {
@@ -396,6 +415,8 @@ void MainWindow::on_regButton_clicked()
     registerWindow->show();
 }
 
+<<<<<<< HEAD
+=======
 // Нажатие на кнопку выхода
 void MainWindow::on_logoutButton_clicked()
 {
@@ -405,6 +426,7 @@ void MainWindow::on_logoutButton_clicked()
     updateAuthButtons();
 }
 
+>>>>>>> 4f82cb32e91a6a89c333c81c3041a59712196a8d
 
 // Меняем кнопки "Войти" и "Зарегистрироваться" на "Выйти" и наоборот
 void MainWindow::updateAuthButtons()
