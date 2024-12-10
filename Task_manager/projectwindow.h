@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QTextEdit>
+#include <QVBoxLayout>
 
 class ProjectWindow : public QDialog
 {
@@ -19,11 +20,14 @@ public slots:
     void on_inviteButton_clicked(); // Слот для приглашения пользователя к подзадаче
     void on_deleteButton_clicked(); // Слот для удаления подзадачи
     void on_saveButton_clicked(); // Слот для сохранения подзадачи
+    void on_addButton_clicked(); // Слот для добавление подзадачи
 
 private:
     QLineEdit *title; // Поле для редактирования названия
     QTextEdit *description_tsk; // Поле для редактирования описания
     QLabel *subtasks_tsk;
+    QPushButton *addButton;
+    QVBoxLayout *subTasksLayout; // Компоновка в виджете проекта
 };
 
 #endif // PROJECTWINDOW_H

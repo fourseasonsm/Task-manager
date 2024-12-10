@@ -5,6 +5,7 @@
 #include "projectwindow.h"
 #include "task.h"
 #include "taskwindow.h"
+#include "global.h"
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -14,7 +15,6 @@
 #include <QTextEdit>
 #include <QPushButton>
 #include <QFrame>
-#include <QTimer>
 #include <QGridLayout>
 #include <QLabel>
 #include <QNetworkAccessManager>
@@ -80,6 +80,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     logoutButton->setFixedSize(100, 35);
     logoutButton->setStyleSheet(buttonStyle);
     logoutButton->hide(); // Скрываем кнопку выхода
+    // addShadowEffect(logoutButton); // Добавляем тень
 
     headerLayout->addWidget(logoutButton, 0, Qt::AlignRight);
     connect(logoutButton, &QPushButton::clicked, this, &MainWindow::on_logoutButton_clicked);
@@ -307,7 +308,6 @@ void MainWindow::updateUsersOnline() {
     });
 }
 
-
 void MainWindow::Load_list_of_tasks()
 {
     if (isLoggedIn) {
@@ -414,7 +414,6 @@ void MainWindow::on_logoutButton_clicked()
     updateAuthButtons();
     updateUsersOnline();
 }
-
 
 // Меняем кнопки "Войти" и "Зарегистрироваться" на "Выйти" и наоборот
 void MainWindow::updateAuthButtons()
