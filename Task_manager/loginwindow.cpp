@@ -16,11 +16,6 @@
 #include <QJsonObject>
 #include <QMessageBox>
 
-<<<<<<< HEAD
-// bool isLoggedIn = false; // Уже определена в mainwindow
-
-=======
->>>>>>> 4f82cb32e91a6a89c333c81c3041a59712196a8d
 LoginWindow::LoginWindow(QWidget *parent)
     : QDialog(parent)
     , socket(new QTcpSocket(this))  // Инициализация сокета
@@ -137,17 +132,9 @@ void LoginWindow::on_regButton_clicked()
     registerWindow->show(); // Отображается поверх окна логина, можно потом пофиксить
 }
 
-<<<<<<< HEAD
-
-// ЧТО ЗА ФУНКЦИЯ?? ГДЕ ПОДПИСЬ??? Я (РЕНАТА) БУДУ РУГАТЬСЯ!!!
-
-void LoginWindow::on_authLoginButton_clicked() {
-
-=======
 //Нажатие на кнопку авторизации
 
 void LoginWindow::on_authLoginButton_clicked() {
->>>>>>> 4f82cb32e91a6a89c333c81c3041a59712196a8d
     // Проверка на пустые поля
     if (loginLineEdit->text().isEmpty() || passwordLineEdit->text().isEmpty()) {
         QMessageBox::warning(this, "Ошибка", "Логин и пароль не могут быть пустыми");
