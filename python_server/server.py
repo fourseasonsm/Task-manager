@@ -5,6 +5,7 @@ import hashlib
 import requests
 import logging
 
+print(a)
 # Настройки логирования
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
