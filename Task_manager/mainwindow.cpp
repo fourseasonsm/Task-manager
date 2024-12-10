@@ -5,11 +5,8 @@
 #include "projectwindow.h"
 #include "task.h"
 #include "taskwindow.h"
-<<<<<<< HEAD
 
-=======
 #include "global.h"
->>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -20,9 +17,8 @@
 #include <QTextEdit>
 #include <QPushButton>
 #include <QFrame>
-<<<<<<< HEAD
+
 #include <QGridLayout>
-=======
 #include <QLabel>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
@@ -30,7 +26,6 @@
 #include <QUrl>
 #include <QJsonDocument>
 #include <QJsonObject>
->>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
 
 bool isLoggedIn = false;
 
@@ -87,10 +82,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     logoutButton->setFixedSize(100, 35);
     logoutButton->setStyleSheet(buttonStyle);
     logoutButton->hide(); // Скрываем кнопку выхода
-<<<<<<< HEAD
-=======
     // addShadowEffect(logoutButton); // Добавляем тень
->>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
 
     headerLayout->addWidget(logoutButton, 0, Qt::AlignRight);
     connect(logoutButton, &QPushButton::clicked, this, &MainWindow::on_logoutButton_clicked);
@@ -276,11 +268,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
 // Слот для создания новой задачи
 void MainWindow::createNewTask() {
     if (isLoggedIn == true) {
-<<<<<<< HEAD
-        Task *newTask = new Task(this);
-=======
         Task *newTask = new Task(smallServerUrl, this);
->>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
 
         tasksLayout->addWidget(newTask);
 
@@ -313,11 +301,7 @@ void MainWindow::on_authLoginButton_clicked()
     updateAuthButtons();
 
     LoginWindow *loginWindow = new LoginWindow(this);
-<<<<<<< HEAD
-    loginWindow->setAttribute(Qt::WA_DeleteOnClose);  // Автоматическое удаление окна при закрытии
-    loginWindow->show();
 
-=======
     //по сути то же самое, что show, только с show геттер не работает
     if (loginWindow->exec() == QDialog::Accepted) {
         smallServerUrl = loginWindow->getSmallServerUrl();
@@ -332,32 +316,11 @@ void MainWindow::on_logoutButton_clicked()
     updateAuthButtons();
 }
 
-void MainWindow::updateAuthButtons()
-{
-    if (isLoggedIn) {
-        authLoginButton->hide();
-        regButton->hide();
-        logoutButton->show();
-    } else {
-        authLoginButton->show();
-        regButton->show();
-        logoutButton->hide();
-    }
->>>>>>> cc19da91e259b3fd21b93732cb41b101ad3d0d9e
-}
-
 // Нажатие на кнопку для перехода к окну регистрации
 void MainWindow::on_regButton_clicked()
 {
     RegistrationWindow *registerWindow = new RegistrationWindow(this);
     registerWindow->show();
-}
-
-// Нажатие на кнопку выхода
-void MainWindow::on_logoutButton_clicked()
-{
-    isLoggedIn = false;
-    updateAuthButtons();
 }
 
 
