@@ -10,11 +10,11 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QLabel>
-#include <QListWidget>
 #include <QVBoxLayout>
 #include <QTextEdit>
 #include <QPushButton>
 #include <QFrame>
+#include <QTimer>
 #include <QGridLayout>
 #include <QLabel>
 #include <QNetworkAccessManager>
@@ -23,6 +23,7 @@
 #include <QUrl>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 
 bool isLoggedIn = false;
 QString user_login_global="NULL";
@@ -177,7 +178,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     rightStripeLayout->addSpacing(30);
 
     // Поле для пользователей онлайн
-    QLabel *usersBox = new QLabel(bottomRightStripe);
+    QWidget *usersBox = new QWidget(bottomRightStripe);
     usersBox->setStyleSheet("background-color: #e1f0db;");
     usersBox->setFixedSize(200, 300);
     rightStripeLayout->addWidget(usersBox, 0, Qt::AlignTop | Qt::AlignHCenter);
@@ -186,61 +187,16 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     QVBoxLayout *usersBoxLayout = new QVBoxLayout(usersBox);
 
     // Список пользователей онлайн
-    QListWidget *usersList = new QListWidget(usersBox);
+    usersList = new QListWidget(usersBox);
     usersList->setStyleSheet("background-color: #e1f0db; color: black; font-size: 18px");
-    usersList->setFixedSize(200, 300);
+    usersBoxLayout->addWidget(usersList);
 
     // Проверка на пустые поля
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
     QUrl url("http://localhost:8080"); // Замените на ваш URL
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-
-    // Создаем JSON объект с данными для авторизации
-    QJsonObject json;
-    json["action"] = "list_of_user"; // Указываем действие
-
-    // Преобразуем JSON объект в документ и выводим его в консоль для отладки
-    QJsonDocument jsonDoc(json);
-
-    // Отправляем POST запрос
-    QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
-
-    // Обрабатываем ответ
-    connect(reply, &QNetworkReply::finished, this, [ usersList, reply]() {
-        if (reply->error() == QNetworkReply::NoError) {
-            QString response = QString::fromUtf8(reply->readAll()).trimmed();
-            QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
-            QJsonObject jsonObject = jsonResponse.object();
-
-            // Проверяем сообщение от сервера
-            QString message = jsonObject["message"].toString();
-            QString list_of_user = jsonObject["list_of_users"].toString();
-            if (message == "List sended") {
-                QString temp = "";
-                for (int i =0;i<=list_of_user.size()-1;i++){
-                    if(list_of_user[i] != ','){
-                        temp = temp + list_of_user[i];
-                    }
-                    else {
-                        usersList->addItem(temp);
-                        temp = "";
-                    }
-                }
-                usersList->addItem(temp);
-            } else {
-                qDebug()<< message;
-            }
-        } else {
-            qDebug()<< "Ошибка"<< "Не удалось получить ответ от сервера: " << reply->errorString();
-        }
-        reply->deleteLater(); // Освобождаем память
-    });
-
-    // Обрабатываем ошибки сети
-    connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
-        QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
-    });
+    updateUsersOnline();
 
     // Добавляем в слой
     usersBoxLayout->addWidget(usersList, 0, Qt::AlignTop | Qt::AlignHCenter);
@@ -304,6 +260,7 @@ void MainWindow::on_authLoginButton_clicked()
     if (isLoggedIn) {
         updateUserName(user_login_global); // Обновляем имя пользователя
         updateAuthButtons();
+        updateUsersOnline();
         Load_list_of_tasks();
     }
 
@@ -314,6 +271,42 @@ void MainWindow::updateUserName(QString &newUserName) {
     QString displayName = isLoggedIn ? newUserName : "Вход не был выполнен"; // Проверяем, авторизован ли пользователь
     user_name->setText(displayName); // Устанавливаем новый текст для QLabel
 }
+
+void MainWindow::updateUsersOnline() {
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QUrl url("http://localhost:8080"); // Replace with your URL
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    QJsonObject json;
+    json["action"] = "list_of_users";
+
+    QJsonDocument jsonDoc(json);
+    QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            QString response = QString::fromUtf8(reply->readAll()).trimmed();
+            QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+            QJsonObject jsonObject = jsonResponse.object();
+
+            if (jsonObject.contains("list_of_users")) {
+                QJsonArray jsonArray = jsonObject["list_of_users"].toArray();
+                usersList->clear();
+                foreach (const QJsonValue &value, jsonArray) {
+                    if (value.isString()) {
+                        QString username = value.toString();
+                        usersList->addItem(username);
+                    }
+                }
+            }
+        } else {
+            qDebug() << "Error" << "Failed to receive server response:" << reply->errorString();
+        }
+        reply->deleteLater();
+    });
+}
+
 
 void MainWindow::Load_list_of_tasks()
 {
@@ -399,10 +392,27 @@ void MainWindow::on_regButton_clicked()
 // Нажатие на кнопку выхода
 void MainWindow::on_logoutButton_clicked()
 {
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QUrl url("http://localhost:8080"); // Замените на ваш URL
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    // Создаем JSON объект с данными для авторизации
+    QJsonObject json;
+    json["action"] = "logout"; // Указываем действие
+    json["login"] = user_login_global;
+
+    // Преобразуем JSON объект в документ и выводим его в консоль для отладки
+    QJsonDocument jsonDoc(json);
+
+    // Отправляем POST запрос
+    QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+    
     user_login_global = "NULL";
     isLoggedIn = false;
     updateUserName(user_login_global);
     updateAuthButtons();
+    updateUsersOnline();
 }
 
 
