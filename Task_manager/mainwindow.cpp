@@ -74,6 +74,14 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     headerLayout->addSpacerItem(new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum));
 
     // Кнопка входа
+    QPushButton *refreshButton = new QPushButton("Обновить", this);
+    refreshButton->setFixedSize(100, 35);
+    refreshButton->setStyleSheet(buttonStyle);
+
+    headerLayout->addWidget(refreshButton, 0, Qt::AlignRight);
+    connect(refreshButton, &QPushButton::clicked, this, &MainWindow::on_refreshButton_clicked);
+
+    // Кнопка входа
     authLoginButton = new QPushButton("Войти", this);
     authLoginButton->setFixedSize(100, 35);
     authLoginButton->setStyleSheet(buttonStyle);
@@ -272,6 +280,10 @@ void MainWindow::on_authLoginButton_clicked()
         Load_list_of_tasks();
     }
 
+}
+
+void MainWindow::on_refreshButton_clicked(){
+    updateUsersOnline();
 }
 
 bool MainWindow::isServerAvailable(const QString &serverUrl) {

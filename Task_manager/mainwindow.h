@@ -28,6 +28,7 @@ private slots:
     void on_authLoginButton_clicked();
     void on_regButton_clicked();
     void on_logoutButton_clicked();
+    void on_refreshButton_clicked();
     void Load_list_of_tasks();
     void updateUsersOnline(); 
     QString selectAvailableServer(const QStringList &serverUrls);
