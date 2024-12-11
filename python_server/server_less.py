@@ -2,6 +2,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import psycopg2
 import logging
+import requests
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -12,7 +13,7 @@ def connecting_to_database():
         port='5432',
         database='small_server_database',
         user='postgres',
-        password='miumiau'
+        password=''
     )
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -52,7 +53,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             taker_id = data.get('taker_id')
 
             login = data.get('login')
-            #user_id = data.get('user_id') я не уверена что оно нам в целом надо, проще с логином работать
+            user_id = data.get('user_id') 
             server_url = data.get('server_url')
 
         except json.JSONDecodeError:
@@ -80,6 +81,128 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             }
 
         self.wfile.write(json.dumps(response).encode('utf-8'))
+
+    def send_invitation(self, server_url, project_name, project_text, subtask_text, subtask_weight, owner_id, subtask_id):
+        connect = None
+        cursor = None
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
+            invitation_data = {
+                "action": "invite_user",
+                "project_name": project_name,
+                "project_text": project_text,
+                "subtask_text": subtask_text,
+                "subtask_weight": subtask_weight,
+                "owner_id": owner_id,
+                "subtask_id": subtask_id
+            }
+            response = requests.post(server_url, json=invitation_data)
+            response.raise_for_status()
+            logger.debug(f"Приглашение отправлено на сервер {server_url}")
+            return response.json()
+        except requests.RequestException as e:
+            logger.error(f"Ошибка при отправке приглашения: {e}")
+            return {
+                'error': str(e)
+            }
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
+
+    def handle_agreement(self, project_name, project_description, subtask_text, subtask_weight, owner_id, subtask_id, user_id):
+        connect = None
+        cursor = None
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
+            cursor.execute("INSERT INTO projects (project_name, project_description, owner_id) VALUES (%s, %s, %s)RETURNING project_id",(project_name, project_description, user_id))
+            project_id = cursor.fetchone()[0]
+
+            cursor.execute("NSERT INTO subtasks (project_id, subtask_text, subtask_weight, taker_id)VALUES (%s, %s, %s, %s)",(project_id, subtask_text, subtask_weight, user_id))
+
+            connect.commit()
+            logger.debug(f"Проект {project_name} сохранен для пользователя {user_id}")
+
+            self.notify_owner_server(owner_id, project_id, subtask_id)
+
+            return {
+                'message': 'Copy of a project created succesfully'
+            }
+        except Exception as e:
+            logger.error(f"Ошибка при обработке согласия пользователя: {e}")
+            return {
+                'error': str(e)
+            }
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
+
+    def agee_notification(self, owner_id, project_id, subtask_id):
+        connect = None
+        cursor = None
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
+
+            cursor.execute("SELECT server_url FROM servers WHERE id = %s", (owner_id,))
+            server_url = cursor.fetchone()[0]
+
+            notification_data = {
+                "action": "subtask taken",
+                "project_id": project_id,
+                "subtask_id": subtask_id
+            }
+
+            response = requests.post(server_url, json=notification_data)
+            response.raise_for_status()
+            logger.debug(f"Уведомление отправлено на сервер {server_url}")
+        except requests.RequestException as e:
+            logger.error(f"Ошибка при отправке уведомления: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
+
+    def project_destruction(self, project_id):
+        connect = None
+        cursor = None
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
+            cursor.execute("SELECT COUNT(*) FROM subtasks WHERE project_id = %s AND status != 'completed'",(project_id,)
+            )
+            incomplete_subtasks_count = cursor.fetchone()[0]
+
+            if incomplete_subtasks_count > 0:
+                logger.warning(f"Проект {project_id} не может быть удален, так как не все подзадачи выполнены.")
+                return {
+                    'error': 'Проект не может быть удален, так как не все подзадачи выполнены.'
+                }
+            cursor.execute(
+                """DELETE FROM projects WHERE project_id = %s""",(project_id,)
+            )
+            connect.commit()
+
+            logger.debug(f"Проект {project_id} успешно удален.")
+            return {
+                'message': 'Проект успешно удален.'
+            }
+        except Exception as e:
+            logger.error(f"Ошибка при удалении проекта: {e}")
+            return {
+                'error': str(e)
+            }
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()  
 
     def task_creation(self, task_name, task_text, login): #РАБОТАЕТ
         connect = None
@@ -138,7 +261,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 'error': str(e)
             }
 
-    def task_destruction(self, task_id):    #РАБОТАЕТ
+    def task_destruction(self, task_id): #РАБОТАЕТ
         connect = None
         cursor = None
         try:
@@ -185,6 +308,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if not user_id_list:
                 return {'message': 'User not found'}
             user_id = user_id_list[0][0]
+
             #изначально foreign id иницилизируется обычным id, нужен он для однозначности проекта при пересылке
             logger.debug("Executing query: INSERT INTO project (project_name, project_text, owner) VALUES (%s, %s, %s)")
             cursor.execute("INSERT INTO project (project_name, project_text, owner) VALUES (%s, %s, %s)", (project_name, project_text, user_id))
@@ -239,9 +363,43 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 cursor.close()
             if connect:
                 connect.close()
+    def delete_project(self, project_id):
+        connect = None
+        cursor = None
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
 
+            # Проверяем, все ли подзадачи выполнены
+            cursor.execute("SELECT COUNT(*) FROM subtasks WHERE project_id = %s AND status != 'completed'",(project_id,)
+            )
+            incomplete_subtasks_count = cursor.fetchone()[0]
 
-    def project_destruction(self, project_id, foreign_project_id, login): #будет удалять проект ТОЛЬКО если его удаляет хозяин, если не хозяин ему нельзя удалять
+            if incomplete_subtasks_count > 0:
+                logger.warning(f"Проект {project_id} не может быть удален, так как не все подзадачи выполнены.")
+                return {
+                    'error': 'This project can\'t be deteted, not all subtasks are completed'
+                }
+            cursor.execute("DELETE FROM projects WHERE project_id = %s",(project_id,)
+            )
+            connect.commit()
+
+            logger.debug(f"Проект успешно удален.")
+            return {
+                'message': 'Project deleted.'
+            }
+        except Exception as e:
+            logger.error(f"Ошибка при удалении проекта: {e}")
+            return {
+                'error': str(e)
+            }
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
+
+    def project_destruction(self, project_id, foreign_project_id, login, project_name, project_text): #будет удалять проект ТОЛЬКО если его удаляет хозяин, если не хозяин ему нельзя удалять
         connect = None
         cursor = None
         try:
@@ -287,15 +445,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
 
-    def delete_project_copy(self, taker_id, owner, project_id, foreign_project_id):
-        connect = None
-        cursor = None
-        try:
-            connect = connecting_to_database()
-            cursor = connect.cursor()
 
-
-    def add_subtask(self, project_id, taker_id, subtask_id): #тут функция меняет в бд взявшего подзадачу, все еще вопрос с индексацией проекта
+    def add_subtask(self, project_id, taker_id, subtask_id, subtask_text, subtask_weight): #тут функция меняет в бд взявшего подзадачу, все еще вопрос с индексацией проекта
         connect = None
         cursor = None
         try:
@@ -350,9 +501,12 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             cursor.execute("SELECT task_name, task_text FROM tasks WHERE owner = %s", (user_id,))
             list_of_tasks = cursor.fetchall()
             print(list_of_tasks)
+            cursor.execute("SELECT project_name, project_text FROM projects WHERE owner = %s", (user_id,))
+            list_of_projects = cursor.fetchall()
             return {
                     'message': 'List sended',
                     'list_of_tasks': list_of_tasks,
+                    'list_of_projects': list_of_projects
                 }
         except Exception as e:
             logger.error(f"Error during getting info: {e}")
@@ -365,60 +519,10 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
         
-    def send_copy(self, project_id, subtask_id, taker_id): #упаковка проекта происходит на сервере хозяина проекта
-        connect = None
-        cursor = None
-        try:
-            connect = connecting_to_database()
-            cursor = connect.cursor()
-            logger.debug("Executing query: SELECT project_name, project_text FROM projects WHERE project_id = %s")
-            cursor.execute("SELECT project_name, project_text FROM projects WHERE project_id= %s", (project_id,))
-            about_project = cursor.fetchall() #посылаем название и описание, вопрос что делать с id, на другом сервере он станет неоднозначным,
-                                            #надо наверное еще таблицу заводить для совместных проектов Можно завести еще одно поле для 
-                                            # хранения Id проекта на этом сервере и на другом, тогда процесс распутывания будет быстрее
-                                            #UPD: храним project_id и from_another_server_project_id. У хозяина проекта эти id будут совпадать
-            logger.debug("Executing query: SELECT subtask_text FROM subtasks WHERE subtask_id = %s")
-            cursor.execute("SELECT subtask_text, taken_by, subtask_weight FROM subtasks WHERE subtask_id = %s", (subtask_id,))
-            about_subtask = cursor.fetchall()
-            all_info = about_project + about_subtask #это надо как то упаковать и отослать по адресу taker_id
-            return {
-                    'message': 'Information about project and subtask sended',
-                    'list_of_tasks': all_info,
-                }
-        except Exception as e:
-            logger.error(f"Error during getting info: {e}")
-            return {
-                'error': str(e)
-            }
-        finally:
-            if cursor:
-                cursor.close()
-            if connect:
-                connect.close()
  
-    def search_dependences(self, project_id, login): #эта фигня тоже на сервере хозяина проекта должна запускаться
-        connect = None
-        cursor = None
-        try:
-            connect = connecting_to_database()
-            cursor = connect.cursor()
-            logger.debug("Executing query: SELECT project_name, project_text FROM projects WHERE project_id = %s")
-            cursor.execute("SELECT  taken_by FROM subtasks WHERE project= %s", (project_id,)) #вот это мы берем, и на сервере взявшего по id 
-            #пользоватя который взял находим по комбинации from_another_server_project_id + taken_by (id проекта на сервере-хозяине, на сервере который хранит копию будет другой id)
-            takers_id = cursor.fetchall() #массив всех кто взял, отправить это на большой сервер и послать им сигнал на выполнение удалялки проекта (а какого именно проекта будет определяться по from_another_server_project_id)
-        except Exception as e:
-            logger.error(f"Error during searching for dependences: {e}")
-            return {
-                'error': str(e)
-            }
-        finally:
-            if cursor:
-                cursor.close()
-            if connect:
-                connect.close()
+    
 
-
-def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, port=8081):
+def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, port=8083):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
     logger.info(f'Starting server on port {port}...')
