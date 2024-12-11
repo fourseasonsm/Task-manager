@@ -7,18 +7,15 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QLabel>
-
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
-#include <QUrl>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMessageBox>
 
-LoginWindow::LoginWindow(QWidget *parent)
-    : QDialog(parent)
-    , socket(new QTcpSocket(this))  // Инициализация сокета
+LoginWindow::LoginWindow(const QUrl &mainServerUrl, QWidget *parent)
+    : QDialog(parent), mainServerUrl(mainServerUrl) // Инициализация членов
 {
     setWindowTitle("Авторизация");
     resize(300, 300);
@@ -108,21 +105,6 @@ void LoginWindow::addShadowEffect(QWidget *widget) {
 }
 
 LoginWindow::~LoginWindow() {
-    socket->disconnectFromHost();
-}
-
-void LoginWindow::sendCredentialsToServer() {
-    QString login = loginLineEdit->text();
-    QString password = passwordLineEdit->text();
-    QString credentials = "LOGIN:" + login + ":" + password;
-
-    if (socket->state() == QAbstractSocket::ConnectedState) {
-        socket->write(credentials.toUtf8() + "\n");
-    }
-}
-
-QTcpSocket* LoginWindow::getSocket() {
-    return socket;
 }
 
 // Нажатие на кнопку для перехода к окну регистрации
@@ -141,8 +123,7 @@ void LoginWindow::on_authLoginButton_clicked() {
         return;
     }
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url("http://localhost:8080"); // Замените на ваш URL
-    QNetworkRequest request(url);
+    QNetworkRequest request(mainServerUrl);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
     // Создаем JSON объект с данными для авторизации
