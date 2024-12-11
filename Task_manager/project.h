@@ -33,6 +33,7 @@ private:
     QPushButton *openButton; // Кнопка для открытия задачи в окне
     QPushButton *saveButton; // Кнопка для сохранения проекта
     QPushButton *inviteButton; // Кнопка для приглашения другого пользователя в проект
+    QPushButton *closeButton; // Кнопка для закрытия проекта
 
     QPushButton *subTaskButton; // Кнопка для добавления подзадачи
     QVBoxLayout *subTasksLayout; // Компоновка в виджете проекта

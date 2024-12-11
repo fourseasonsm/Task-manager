@@ -94,6 +94,12 @@ Project::Project(QWidget *parent)
     saveButton->setStyleSheet(buttonStyle);
     buttonLayout->addWidget(saveButton);
 
+    // Кнопка закрытия окна (Рената может её облагородить)
+    closeButton = new QPushButton("✖", this); // Используем символ крестика
+    closeButton->setFixedSize(40, 40);
+    closeButton->setStyleSheet(buttonStyle);
+    buttonLayout->addWidget(closeButton);
+
     // Добавляем компоновку кнопок в рамку
     projectBoxLayout->addLayout(buttonLayout);
 

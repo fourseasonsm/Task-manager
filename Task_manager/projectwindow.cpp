@@ -8,6 +8,7 @@
 #include <QLineEdit>
 #include <QLabel>
 #include <QIntValidator>
+#include <QScrollArea>
 
 ProjectWindow::ProjectWindow(QWidget *parent)
     : QDialog(parent)
@@ -23,7 +24,7 @@ ProjectWindow::ProjectWindow(QWidget *parent)
     // Белая шапка
     QLabel *taskTopPart = new QLabel();
     taskTopPart->setStyleSheet("background-color: white;");
-    taskTopPart->setFixedHeight(50);
+    taskTopPart->setFixedHeight(32);
     taskTopPart->setAlignment(Qt::AlignCenter);
     taskLayout->addWidget(taskTopPart);
 
@@ -54,14 +55,48 @@ ProjectWindow::ProjectWindow(QWidget *parent)
     // Отступ
     taskLayout->addSpacing(10);
 
+    // Создаём горизонтальный слой для подзадачи
+    QHBoxLayout *subLayout = new QHBoxLayout();
+
     // Текст "Подзадачи проекта"
     QLabel *subtasks_tsk = new QLabel("Подзадачи проекта", this);
-    subtasks_tsk->setStyleSheet("background-color: transparent; color: black; font-size: 14px; outline: none; border: none;");
-    taskLayout->addWidget(subtasks_tsk);
+    subtasks_tsk->setStyleSheet("background-color: transparent; color: black; text-decoration: underline; font-size: 14px; outline: none; border: none;");
+    subLayout->addWidget(subtasks_tsk);
+
+    // Кнопка "Добавить подзадачу"
+    QPushButton *addButton = new QPushButton("Добавить подзадачу");
+    addButton->setStyleSheet("background-color: #3b4f2a; color: white; font-size: 12px; outline: none; border: none; border-radius: 5px; padding: 3px 8px;");
+    addButton->setFixedSize(130, 22);
+    subLayout->addWidget(addButton);
+
+    subLayout->addStretch();
 
     // Отступ
     taskLayout->addSpacing(10);
 
+    // Создаем контейнер для подзадач
+    QWidget *subContainer = new QWidget(this);
+    subTasksLayout = new QVBoxLayout(subContainer);  // Вертикальная компоновка для подзадач
+    subContainer->setLayout(subTasksLayout);
+
+    // Оборачиваем контейнер для подзадач в QScrollArea
+    QScrollArea *scrollArea = new QScrollArea(this);
+    scrollArea->setWidget(subContainer);  // Устанавливаем контейнер с подзадачами в QScrollArea
+    scrollArea->setWidgetResizable(true);  // Устанавливаем, чтобы содержимое растягивалось
+
+    taskLayout->addLayout(subLayout);
+    taskLayout->addWidget(scrollArea);
+
+    // taskLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
+
+    connect(addButton, &QPushButton::clicked, this, &ProjectWindow::on_addButton_clicked);
+}
+
+ProjectWindow::~ProjectWindow()
+{
+}
+
+void ProjectWindow::on_addButton_clicked() {
     // Создаём горизонтальный слой для подзадачи
     QHBoxLayout *subTaskLayout = new QHBoxLayout();
 
@@ -80,9 +115,9 @@ ProjectWindow::ProjectWindow(QWidget *parent)
     subTaskWeight->setStyleSheet("background-color: white; color: black; font-size: 10px; outline: none; border: none;");
 
     // Приглашенный пользователь
-    QLabel *user_tsk = new QLabel("Имя пользователя");
+    QLineEdit *user_tsk = new QLineEdit("Имя пользователя");
     user_tsk->setStyleSheet("background-color: transparent; color: black; font-size: 15px;");
-    taskLayout->addWidget(user_tsk, 0, Qt::AlignRight);
+    user_tsk->setFixedSize(235, 22);
 
     // Создаём горизонтальный слой для подзадачи
     QHBoxLayout *subButtonsLayout = new QHBoxLayout();
@@ -113,20 +148,19 @@ ProjectWindow::ProjectWindow(QWidget *parent)
     subButtonsLayout->addWidget(deleteButton);
 
     // Добавляем подзадачу в контейнер
-    taskLayout->addLayout(subTaskLayout);
-    taskLayout->addLayout(subButtonsLayout);
+    subTasksLayout->addLayout(subTaskLayout);
+    subTasksLayout->addLayout(subButtonsLayout);
 
-    taskLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    // Обновляем отображение
+    updateGeometry();
 
-    // Подключаем сигналы
+    // Подключаем сигнал измененния текста к слоту
     connect(subTaskWeight, &QLineEdit::textChanged, this, &ProjectWindow::textChanged);
-    connect(inviteButton, &QPushButton::clicked, this, &ProjectWindow::on_inviteButton_clicked);
-    connect(deleteButton, &QPushButton::clicked, this, &ProjectWindow::on_deleteButton_clicked);
-    connect(saveButton, &QPushButton::clicked, this, &ProjectWindow::on_saveButton_clicked);
-}
 
-ProjectWindow::~ProjectWindow()
-{
+    // Подключаем сигнал кнопки "Пригласить" к слоту
+    connect(inviteButton, &QPushButton::clicked, this, &ProjectWindow::on_inviteButton_clicked);
+    connect(saveButton, &QPushButton::clicked, this, &ProjectWindow::on_saveButton_clicked);
+    connect(deleteButton, &QPushButton::clicked, this, &ProjectWindow::on_deleteButton_clicked);
 }
 
 void ProjectWindow::on_inviteButton_clicked() {

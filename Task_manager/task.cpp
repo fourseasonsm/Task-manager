@@ -53,7 +53,7 @@ Task::Task(const QString &smallServerUrl, QWidget *parent)
     descriptionEdit->setPlaceholderText("Описание задачи");
     taskBoxLayout->addWidget(descriptionEdit);
 
-    // Горизонтальный слой для кнопки "Выполнить"
+    // Горизонтальный слой для кнопок
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     buttonLayout->addStretch(); // Заполнитель слева для выравнивания кнопки вправо
 
@@ -77,7 +77,7 @@ Task::Task(const QString &smallServerUrl, QWidget *parent)
 
     // Кнопка закрытия окна (Рената может её облагородить)
     QPushButton *closeButton = new QPushButton("✖", this); // Используем символ крестика
-    closeButton->setFixedSize(30, 30);
+    closeButton->setFixedSize(40, 40);
     closeButton->setStyleSheet(buttonStyle);
     buttonLayout->addWidget(closeButton);
 

@@ -12,7 +12,7 @@ def connecting_to_database():
         port='5432',
         database='small_server_database',
         user='postgres',
-        password='miu'
+        password='miumiau'
     )
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
