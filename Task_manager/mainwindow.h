@@ -30,11 +30,14 @@ private slots:
     void on_logoutButton_clicked();
     void Load_list_of_tasks();
     void updateUsersOnline(); 
+    QString selectAvailableServer(const QStringList &serverUrls);
 
 private:
     //Поле для хранения имени вошедшего юзера
     QLabel *user_name;
+    QStringList mainServerUrls;
 
+    bool isServerAvailable(const QString &serverUrl);
     void updateAuthButtons();
     void updateUserName(QString &newUserName);
 

@@ -25,14 +25,20 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
+
 bool isLoggedIn = false;
 QString user_login_global="NULL";
 // Цвета: Средний зеленый -  #a7bfa5, светлый зеленый - #e1f0db, темный зеленый - #3b4f2a
 
-
 MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrollArea(this)) {
     setWindowTitle("Task Manager");
     resize(1200, 700);
+
+    mainServerUrls = {
+        "http://localhost:8080",  // Основной сервер
+        "http://localhost:8079",  // Резервный сервер 1
+        "http://localhost:8078"   // Резервный сервер 2
+    };
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
@@ -91,7 +97,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     regButton->setStyleSheet(buttonStyle);
 
     headerLayout->addWidget(regButton, 0, Qt::AlignRight);
-    connect(regButton, &QPushButton::clicked, this, &MainWindow::on_regButton_clicked);    connect(regButton, &QPushButton::clicked, this, &MainWindow::on_regButton_clicked);
+    connect(regButton, &QPushButton::clicked, this, &MainWindow::on_regButton_clicked);
 
 
     // Разделитель
@@ -194,7 +200,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
 
     // Проверка на пустые поля
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url("http://localhost:8080"); // Замените на ваш URL
+    QUrl url = selectAvailableServer(mainServerUrls);
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     updateUsersOnline();
@@ -250,7 +256,8 @@ void MainWindow::createNewProject() {
 // Нажатие на кнопку для перехода к окну авторизации
 void MainWindow::on_authLoginButton_clicked()
 {
-    LoginWindow *loginWindow = new LoginWindow(this);
+    QUrl url = selectAvailableServer(mainServerUrls);
+    LoginWindow *loginWindow = new LoginWindow(url, this);
     //Error закрывется не окно логина, а вообще все
 //    loginWindow->setAttribute(Qt::WA_DeleteOnClose);  // Автоматическое удаление окна при закрытии
 
@@ -267,6 +274,29 @@ void MainWindow::on_authLoginButton_clicked()
 
 }
 
+bool MainWindow::isServerAvailable(const QString &serverUrl) {
+    QNetworkAccessManager manager;
+    QNetworkRequest request(QUrl(serverUrl + "/healthcheck")); // Предположим, сервер имеет маршрут "/healthcheck" для проверки состояния
+    QNetworkReply *reply = manager.get(request);
+
+    QEventLoop loop;
+    QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+
+    bool available = reply->error() == QNetworkReply::NoError;
+    reply->deleteLater();
+    return available;
+}
+
+QString MainWindow::selectAvailableServer(const QStringList &serverUrls) {
+    for (const QString &serverUrl : serverUrls) {
+        if (isServerAvailable(serverUrl)) {
+            return serverUrl;
+        }
+    }
+    return QString(); // Возвращаем пустую строку, если ни один сервер не доступен
+}
+
 //Изменяет имя юзера на переданное
 void MainWindow::updateUserName(QString &newUserName) {
     QString displayName = isLoggedIn ? newUserName : "Вход не был выполнен"; // Проверяем, авторизован ли пользователь
@@ -275,7 +305,7 @@ void MainWindow::updateUserName(QString &newUserName) {
 
 void MainWindow::updateUsersOnline() {
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url("http://localhost:8080"); // Replace with your URL
+    QUrl url = selectAvailableServer(mainServerUrls);
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -386,14 +416,15 @@ void MainWindow::Load_list_of_tasks()
 void MainWindow::on_regButton_clicked()
 {
     RegistrationWindow *registerWindow = new RegistrationWindow(this);
-    registerWindow->show();
+    if (registerWindow->exec() == QDialog::Accepted) {
+    }
 }
 
 // Нажатие на кнопку выхода
 void MainWindow::on_logoutButton_clicked()
 {
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url("http://localhost:8080"); // Замените на ваш URL
+    QUrl url = selectAvailableServer(mainServerUrls);
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 

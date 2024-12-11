@@ -68,33 +68,6 @@ private:
 
 int main(int argc, char *argv[])
 {
-    // Нам больше не нужно это в функции писать, это в классе реализовано
-
-//    QApplication app(argc, argv);
-//    MainWindow mainWindow;
-//    mainWindow.show();
-
-    // LoginWindow loginWindow;
-    // if (loginWindow.exec() == QDialog::Accepted) {
-    //     MainWindow mainWindow;
-    //     mainow.resize(700, 500);
-    //     mainWindow.show(); // Или используйте exec(), если нужно модальное окно
-
-    //     return a.exec(); // Запустите основной цикл событий
-    // }
-
-    // Если убрать комм, при попытке перейти к окну регистрации все окна закрываютя :(
-
-    // RegistrationWindow registrationWindow;
-    // if (registrationWindow.exec() == QDialog::Accepted) {
-    //     LoginWindow loginWindow;
-    //     loginWindow.show();
-
-    //     return a.exec();
-    // }
-
-//    app.exec();
-
     MyApp rer(argc, argv);
     MainWindow mainWindow;
     mainWindow.show();

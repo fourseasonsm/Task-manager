@@ -5,7 +5,6 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QLabel>
-
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -14,8 +13,8 @@
 #include <QJsonObject>
 #include <QString>
 
-RegistrationWindow::RegistrationWindow(QWidget *parent, QTcpSocket *existingSocket)
-    : QDialog(parent), socket(existingSocket)  // Инициализация переданным сокетом
+RegistrationWindow::RegistrationWindow(QWidget *parent)
+    : QDialog(parent)
 {
     /*this->setStyleSheet(
         "background-color: #e0f7e0;"  // неудачная попытка изменения цвета
@@ -136,6 +135,7 @@ void RegistrationWindow::on_registerButton_clicked() {
             qDebug() << message;
             if (message == "Registration successful!") {
                 QMessageBox::information(this, "Регистрация", "Регистрация прошла успешно");
+                accept();  // Закрываем окно и разрешаем доступ
             } else {
                  QMessageBox::warning(this, "Ошибка", "Регистрация не удалась");
             }

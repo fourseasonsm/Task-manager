@@ -1,6 +1,6 @@
 #include "task.h"
 #include "taskwindow.h"
-
+#include "global.h"
 #include <QVBoxLayout>
 #include <QLineEdit>
 #include <QTextEdit>
