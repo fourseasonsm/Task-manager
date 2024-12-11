@@ -138,7 +138,7 @@ void ProjectWindow::on_deleteButton_clicked() {
 }
 
 void ProjectWindow::on_saveButton_clicked() {
-
+    emit savetask();
 }
 
 void ProjectWindow::textChanged() {

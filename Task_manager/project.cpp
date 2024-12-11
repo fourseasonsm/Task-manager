@@ -116,6 +116,7 @@ void Project::markAsDone() {
 void Project::openProject() {
 
     ProjectWindow *projectWindow = new ProjectWindow(this);
+    connect(projectWindow, SIGNAL(savetask()), this, SLOT(addSubTask()));
 
     projectWindow->show();
 }

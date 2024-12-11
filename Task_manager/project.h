@@ -16,8 +16,10 @@
 public:
     Project(QWidget *parent = nullptr);
 
-private slots:
+public slots:
     void addSubTask(); // Слот для создания новой задачи
+
+private slots:
     void markAsDone(); // Слот для пометки задачи как выполненной
     void openProject(); // Слот для открытия задачи в окне
     void on_inviteButton_clicked(); // Слот для приглашения пользователя
