@@ -14,7 +14,8 @@ class InviteWindow : public QDialog
 public:
     explicit InviteWindow(QWidget *parent = nullptr);
     ~InviteWindow();
-
+signals:
+    void invite_user (const QString &invited_user_login);// Сигнал для приглашения юзера
 private slots:
     void on_inviteButtonInWindow_clicked();
 

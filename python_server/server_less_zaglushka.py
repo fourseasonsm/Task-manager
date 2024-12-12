@@ -2,7 +2,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 
 # Хранение зарегистрированных пользователей
-tasks = {'test0' :['test_1' ,'test1']}
+tasks = {'test0' :['test_1' ,'test1'],'test1' :['test_1' ,'test1']}
 test = tasks['test0'][0]+',' + tasks['test0'][1]
 print (test)
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -31,7 +31,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             return
         if action == 'creation':
             # Обработка действий
-            print (tasks[user_name])
             if task_name  in tasks[user_name]:
                 print (action)
                 response = {
@@ -46,17 +45,18 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 'task_name': task_name
                 }
         elif action == 'list_of_tasks':
-            print (tasks[user_name])
-            if tasks[user_name]:
+            if user_name in tasks:
                 list_of_tasks = ""
                 for i in range(0, len(tasks[user_name])-1) :
-                    list_of_tasks = list_of_tasks+tasks[user_name][i] + ',' + tasks[user_name][i+1]
-                    i=i+1
+                    if (i % 2 == 0):
+                        list_of_tasks = list_of_tasks+tasks[user_name][i] + ',' + tasks[user_name][i+1]+ ','
+                    print (list_of_tasks)
                 response = {
                     'message': 'List sended',
                     'list_of_tasks': list_of_tasks,
                 }
             else:
+                tasks[user_name] = [];
                 response = {
                 'message': 'Task list empty!',
                 }

@@ -7,6 +7,8 @@
 #include <QLabel>
 #include <QWidget>
 #include <QDialog>
+#include <QMessageBox>
+
 
 InviteWindow::InviteWindow(QWidget *parent)
     : QDialog(parent)
@@ -47,7 +49,7 @@ InviteWindow::InviteWindow(QWidget *parent)
     inviteLayout->addSpacing(10);
 
     // Кнопка "Пригласить"
-    QPushButton *inviteButtonInWindow = new QPushButton("Пригласить", this);
+    QPushButton *inviteButtonInWindow = new QPushButton("Сохранить адресата", this);
     inviteButtonInWindow->setStyleSheet(buttonStyle);
     inviteButtonInWindow->setFixedSize(150, 35);
 
@@ -65,5 +67,6 @@ InviteWindow::~InviteWindow() {
 }
 
 void InviteWindow::on_inviteButtonInWindow_clicked() {
-    // Написать, что происходит после нажатия кнопки "Пригласить" в окне
+    emit invite_user(inviteLineEdit->text()); // Написать, что происходит после нажатия кнопки "Пригласить" в окне
+    QMessageBox::information(this, "Адресат сохранен","Адресат сохранен");
 }
