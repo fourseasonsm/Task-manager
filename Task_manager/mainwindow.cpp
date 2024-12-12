@@ -34,10 +34,8 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     setWindowTitle("Task Manager");
     resize(1200, 700);
 
-    mainServerUrls = {
-        "http://localhost:8079",  // Резервный сервер 1
-        "http://localhost:8078"   // Резервный сервер 2
-    };
+    mainServerUrls.append("http://localhost:8079");  // Резервный сервер 1
+    mainServerUrls.append("http://localhost:8078");  // Резервный сервер 2
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
@@ -428,7 +426,8 @@ void MainWindow::Load_list_of_tasks()
 // Нажатие на кнопку для перехода к окну регистрации
 void MainWindow::on_regButton_clicked()
 {
-    RegistrationWindow *registerWindow = new RegistrationWindow(selectAvailableServer(mainServerUrls), this);
+    QUrl url = selectAvailableServer(mainServerUrls);
+    RegistrationWindow *registerWindow = new RegistrationWindow(url, this);
     if (registerWindow->exec() == QDialog::Accepted) {
     }
 }

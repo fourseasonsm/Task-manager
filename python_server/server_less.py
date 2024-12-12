@@ -13,7 +13,7 @@ def connecting_to_database():
         port='5432',
         database='small_server_database',
         user='postgres',
-        password='miumiau'
+        password='miu'
     )
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -53,8 +53,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             subtask_weight = data.get('subtask_weight')
             taker_login = data.get('taker_login')
 
-            login = data.get('login')
-            user_id = data.get('user_id') 
+            user_id = data.get('user_id')
+            login = data.get('login') 
             server_url = data.get('server_url')
 
         except json.JSONDecodeError:
@@ -91,7 +91,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
         self.wfile.write(json.dumps(response).encode('utf-8'))
 
-    def send_invitation(self, target_login, project_name, project_text, subtask_text, subtask_weight, login, subtask_id):
+    def send_invitation(self, target_login, project_name, project_text, project_id, subtask_text, subtask_weight, login, subtask_id):
         try:
             #ищем куда отправлять с помощью запроса к большому серверу
             user_server_url = self.get_user_server_url(target_login)
@@ -105,6 +105,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 "target_login": target_login,  # логин пользователя, которому отправляется приглашение
                 "project_name": project_name,
                 "project_text": project_text,
+                'foreign_id': project_id,
                 "subtask_text": subtask_text,
                 "subtask_weight": subtask_weight,
                 "login": login,  # логин хозяина проекта
@@ -141,7 +142,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             logger.error(f"Ошибка при запросе информации о сервере пользователя: {e}")
             return None
 
-    def handle_agreement(self, project_name, project_text, subtask_text, subtask_weight, owner_login, subtask_id, taker_login):
+    def handle_agreement(self, project_name, foreign_id, project_text, subtask_text, subtask_weight, owner_login, subtask_id, taker_login):
         connect = None
         cursor = None
         try:
@@ -149,10 +150,10 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             cursor = connect.cursor()
 
             # сохренение отправленного проекта как своего проекта при согласии
-            cursor.execute("INSERT INTO projects (project_name, project_text, owner_login, taker_login) VALUES (%s, %s, %s, %s) RETURNING project_id", (project_name, project_text, owner_login, taker_login))
+            cursor.execute("INSERT INTO projects ( foreign_id, project_name, project_text, real_owner, owner) VALUES (%s, %s, %s, %s, %s) RETURNING project_id", (foreign_id, project_name, project_text, owner_login, taker_login))
             project_id = cursor.fetchone()[0]
 
-            cursor.execute("INSERT INTO subtasks (project_id, subtask_text, subtask_weight, taker_login, status) VALUES (%s, %s, %s, %s, 'accepted')",(project_id, subtask_text, subtask_weight, taker_login))
+            cursor.execute("INSERT INTO subtasks (project_id, subtask_text, subtask_weight, taken_by, status) VALUES (%s, %s, %s, %s, 'accepted')",(project_id, subtask_text, subtask_weight, taker_login))
 
             connect.commit()
             logger.debug(f"Проект {project_name} сохранен для пользователя {taker_login}")
@@ -263,8 +264,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 return {
                     'error': 'Проект не может быть удален, так как не все подзадачи выполнены.'
                 }
-            cursor.execute(
-                """DELETE FROM projects WHERE project_id = %s""",(project_id,)
+            cursor.execute("DELETE FROM projects WHERE project_id = %s",(project_id,)
             )
             connect.commit()
 
@@ -289,15 +289,9 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
-            #получаем логин и находим user_id тк хранить его как будто не очень удобно
-            cursor.execute("SELECT user_id FROM users_small_server WHERE login = %s", (login,))
-            user_id_list = cursor.fetchall()
-            if not user_id_list:
-                return {'message': 'User not found'}
-            user_id = user_id_list[0][0]
-
+            print(login)
             logger.debug("Executing query: INSERT INTO tasks (task_name, task_text, owner) VALUES (%s, %s, %s)")
-            cursor.execute("INSERT INTO tasks (task_name, task_text, owner) VALUES (%s, %s, %s)", (task_name, task_text, user_id))
+            cursor.execute("INSERT INTO tasks (task_name, task_text, owner) VALUES (%s, %s, %s)", (task_name, task_text, login))
             connect.commit()
 
             # Берем максимальный ID, так как нумерация автоматическая и возрастающая
@@ -328,7 +322,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             cursor = connect.cursor()
             
             logger.debug("Executing query: UPDATE users SET server_url = %s WHERE login = %s")
-            cursor.execute("INSERT INTO users_small_server (user_id, score, server_url, isOnline, login) VALUES (%s, 0, %s, false, %s)", (user_id, server_url, login))  
+            cursor.execute("INSERT INTO users_small_server (user_id, score, server_url, is_online, login) VALUES (%s, 0, %s, false, %s)", (user_id, server_url, login))  
             connect.commit()
             logger.debug("Registration successful")
             return {
@@ -389,31 +383,33 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
             # Создаем проект
             cursor.execute(
-                "INSERT INTO project (project_name, project_text, owner) VALUES (%s, %s, %s) RETURNING project_id",
-                (project_name, project_text, user_id)
+                "INSERT INTO project (project_name, project_text, owner, real_owner) VALUES (%s, %s, %s, %s) RETURNING project_id",
+                (project_name, project_text, login, login)
             )
             project_id = cursor.fetchone()[0]
-            connect.commit()
-            logger.debug(f"Project '{project_name}' created with ID {project_id}")
+            cursor.execute("UPDATE project SET foreign_id = %s WHERE project_id = %s", (project_id, project_id))
+
+            connect.commit() 
+            logger.debug(f"Проект '{project_name}' создан с ID {project_id} и foreign_id = {project_id}")
 
             # Список подзадач
             subtasks = [
-                (subtask1_text, subtask1_weight),
-                (subtask2_text, subtask2_weight),
-                (subtask3_text, subtask3_weight)
+            (subtask1_text, subtask1_weight, 1),  # Номер подзадачи 1
+            (subtask2_text, subtask2_weight, 2),  # Номер подзадачи 2
+            (subtask3_text, subtask3_weight, 3)   # Номер подзадачи 3
             ]
 
             subtask_ids = []
 
             # Добавляем подзадачи
-            for subtask_text, subtask_weight in subtasks:
-                cursor.execute("INSERT INTO subtasks (project, subtask_text, taker_id, subtask_weight) VALUES (%s, %s, %s, %s) RETURNING subtask_id",
-                (project_id, subtask_text, user_id, subtask_weight)
-            )
+            for subtask_text, subtask_weight, subtask_number in subtasks:
+                cursor.execute("INSERT INTO subtasks (project, subtask_text, taker_id, subtask_weight, status, number) VALUES (%s, %s, %s, %s, 'completed', %s) RETURNING subtask_id",
+                (project_id, subtask_text, user_id, subtask_weight, subtask_number)
+                )
                 subtask_id = cursor.fetchone()[0]
                 subtask_ids.append(subtask_id)
                 connect.commit()
-                logger.debug(f"Subtask '{subtask_text}' added with ID {subtask_id}")
+                logger.debug(f"Subtask '{subtask_text}' added with ID {subtask_id} and number {subtask_number}")
 
             logger.debug("Project creation successful")
 
@@ -443,19 +439,11 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
-            logger.debug("Executing query: SELECT task_id, task_name, task_text FROM tasks WHERE owner = %s")
-             # Получаем user_id по логину
-            cursor.execute("SELECT user_id FROM users_small_server WHERE login = %s", (login,))
-            user_id_list = cursor.fetchall()
-            if not user_id_list:
-                return {'message': 'User not found'}
-            user_id = user_id_list[0][0]
-        
             # Получаем список задач для данного user_id
-            cursor.execute("SELECT task_id, task_name, task_text FROM tasks WHERE owner = %s", (user_id,))
+            cursor.execute("SELECT task_id, task_name, task_text FROM tasks WHERE owner = %s", (login,))
             list_of_tasks = cursor.fetchall()
             print(list_of_tasks)
-            cursor.execute("SELECT project_name, project_text FROM projects WHERE owner = %s", (user_id,))
+            cursor.execute("SELECT project_id, project_name, project_text FROM projects WHERE owner = %s", (login,))
             list_of_projects = cursor.fetchall()
             return {
                     'message': 'List sended',
@@ -476,7 +464,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
  
     
 
-def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, port=8081):
+def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, port=8083):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
     logger.info(f'Starting server on port {port}...')

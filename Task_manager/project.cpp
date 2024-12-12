@@ -171,7 +171,7 @@ void Project::saveProject() {
 
             // Проверяем сообщение от сервера
             QString message = jsonObject["message"].toString();
-            QString project_id_temp = jsonObject["task_id"].toString();
+            QString project_id_temp = jsonObject["project_id"].toString();
             if (message == "project creation successful!") {
                 project_id=project_id_temp;
                 QMessageBox::information(this, "Проект сохранен", message);
