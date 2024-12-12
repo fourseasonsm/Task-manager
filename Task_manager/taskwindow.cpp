@@ -8,7 +8,7 @@
 #include <QLabel>
 
 
-TaskWindow::TaskWindow(QWidget *parent)
+TaskWindow::TaskWindow(QWidget *parent,const QString task_name,const QString task_text)
     : QDialog(parent)
 {
     setWindowTitle("Задача"); // Позже изменить
@@ -31,6 +31,7 @@ TaskWindow::TaskWindow(QWidget *parent)
     // Название проекта
     title = new QLineEdit("Новая задача", this);
     title->setStyleSheet(lineEditStyle + "font-size: 20px;");
+    title->setText(task_name);
     headerLayout->addWidget(title, 0, Qt::AlignTop);
 
     // Добавляем пустое пространство справа для выравнивания
@@ -48,6 +49,7 @@ TaskWindow::TaskWindow(QWidget *parent)
     description_tsk = new QTextEdit("Описание задачи");
     description_tsk->setStyleSheet(lineEditStyle + "font-size: 15px;");
     description_tsk->setMaximumHeight(150);
+    description_tsk->setText(task_text);
     taskLayout->addWidget(description_tsk);
 
     taskLayout->addItem(new QSpacerItem(10, 20, QSizePolicy::Minimum, QSizePolicy::Expanding));
@@ -86,13 +88,14 @@ TaskWindow::~TaskWindow()
 }
 
 void TaskWindow::on_saveButton_clicked() {
-
+    emit Change_task_info(title->text(),description_tsk->toPlainText());
+    emit savetask();
 }
 
 void TaskWindow::on_doneButton_clicked() {
-
+    emit donetask();
 }
 
 void TaskWindow::on_closeButton_clicked() {
-
+    QWidget::close(); // Вызываем метод close базового класса
 }

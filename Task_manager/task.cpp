@@ -1,6 +1,6 @@
 #include "task.h"
 #include "taskwindow.h"
-
+#include "global.h"
 #include <QVBoxLayout>
 #include <QLineEdit>
 #include <QTextEdit>
@@ -227,9 +227,16 @@ void Task::markAsDone() {
 
 void Task::openTask() {
 
-    TaskWindow *taskWindow = new TaskWindow(this);
-
+    TaskWindow *taskWindow = new TaskWindow(this,titleEdit->text(),descriptionEdit->toPlainText());
+    connect(taskWindow, SIGNAL(Change_task_info(QString,QString)), this, SLOT(change_task_info(QString,QString)));
+    connect(taskWindow, SIGNAL(savetask()), this, SLOT(saveTask()));
+    connect(taskWindow, SIGNAL(donetask()), this, SLOT(markAsDone()));
     taskWindow->show();
+}
+
+void Task::change_task_info(QString task_name, QString task_text) {
+    titleEdit->setText(task_name);
+    descriptionEdit->setText(task_text);
 }
 
 void Task::close() {
