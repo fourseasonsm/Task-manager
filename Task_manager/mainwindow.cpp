@@ -35,7 +35,6 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     resize(1200, 700);
 
     mainServerUrls = {
-        "http://localhost:8080",  // Основной сервер
         "http://localhost:8079",  // Резервный сервер 1
         "http://localhost:8078"   // Резервный сервер 2
     };
@@ -307,7 +306,8 @@ QString MainWindow::selectAvailableServer(const QStringList &serverUrls) {
             return serverUrl;
         }
     }
-    return QString(); // Возвращаем пустую строку, если ни один сервер не доступен
+    QString url = "http://localhost:8080";
+    return url; // Возвращаем пустую строку, если ни один сервер не доступен
 }
 
 //Изменяет имя юзера на переданное
@@ -354,6 +354,12 @@ void MainWindow::updateUsersOnline() {
 void MainWindow::Load_list_of_tasks()
 {
     if (isLoggedIn) {
+        QList<Task*> taskWidgets = tasksLayout->findChildren<Task*>();
+        for (Task* task : taskWidgets) {
+            tasksLayout->removeWidget(task); // Удаляем виджет из макета
+            task->deleteLater(); // Удаляем объект Task
+        }
+
         QNetworkAccessManager *manager = new QNetworkAccessManager(this);
         QUrl url(smallServerUrl); // Замените на ваш URL
         QNetworkRequest request(url);
@@ -380,7 +386,7 @@ void MainWindow::Load_list_of_tasks()
                 if (message == "List sended") {
                     // Получаем список задач
                     QJsonArray listOfTasks = jsonObject["list_of_tasks"].toArray();
-
+                    
                     for (const QJsonValue& taskValue : listOfTasks) {
                         // Каждый элемент массива — это массив из двух элементов
                         QJsonArray taskArray = taskValue.toArray();
@@ -396,7 +402,10 @@ void MainWindow::Load_list_of_tasks()
                             qWarning() << "Invalid task format:" << taskArray;
                         }
                     }
-                    QMessageBox::information(this, "Загрузка задач", "Загрузка задач прошла успешно");
+                    if (listOfTasks.isEmpty()) {
+                        QMessageBox::information(this, "Нет задач", "Вы еще не создали задач.");
+                    } else {
+                    QMessageBox::information(this, "Загрузка задач", "Загрузка задач прошла успешно");}
                 } else {
                     QMessageBox::warning(this, "Ошибка при при отправке задач", message);
                 }
@@ -419,7 +428,7 @@ void MainWindow::Load_list_of_tasks()
 // Нажатие на кнопку для перехода к окну регистрации
 void MainWindow::on_regButton_clicked()
 {
-    RegistrationWindow *registerWindow = new RegistrationWindow(this);
+    RegistrationWindow *registerWindow = new RegistrationWindow(selectAvailableServer(mainServerUrls), this);
     if (registerWindow->exec() == QDialog::Accepted) {
     }
 }
@@ -464,4 +473,8 @@ void MainWindow::updateAuthButtons()
     }
 
     this->update();
+}
+
+MainWindow::~MainWindow(){
+    on_logoutButton_clicked();
 }

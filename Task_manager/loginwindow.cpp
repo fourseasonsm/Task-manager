@@ -110,7 +110,7 @@ LoginWindow::~LoginWindow() {
 // Нажатие на кнопку для перехода к окну регистрации
 void LoginWindow::on_regButton_clicked()
 {
-    RegistrationWindow *registerWindow = new RegistrationWindow(this);
+    RegistrationWindow *registerWindow = new RegistrationWindow(mainServerUrl,this);
     registerWindow->show(); // Отображается поверх окна логина, можно потом пофиксить
 }
 
@@ -175,7 +175,7 @@ QString LoginWindow::getSmallServerUrl() const {
 
 void LoginWindow::connectToServer() {
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url("http://localhost:8080"); // Замените на ваш URL
+    QUrl url = mainServerUrl; // Замените на ваш URL
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 

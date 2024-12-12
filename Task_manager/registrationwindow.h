@@ -13,7 +13,7 @@ class RegistrationWindow : public QDialog
     Q_OBJECT
 
 public:
-    explicit RegistrationWindow(QWidget *parent = nullptr);
+    explicit RegistrationWindow(const QUrl &mainServerUrl, QWidget *parent = nullptr);
 
     static void addShadowEffect(QWidget *widget);
 
@@ -22,6 +22,7 @@ private slots:
     bool registerUser(); // Новый слот для регистрации
 
 private:
+    const QUrl &mainServerUrl; // Ссылка на URL сервера
     QLineEdit *loginEdit;
     QLineEdit *emailEdit;
     QLineEdit *passwordEdit;

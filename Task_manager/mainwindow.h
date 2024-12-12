@@ -21,6 +21,7 @@ public:
     //поле для хранения адреса обрабатывающего сервера, которое передается в конструктор Task
     QString smallServerUrl;
     MainWindow(QWidget *parent = nullptr);
+    ~MainWindow();
 
 private slots:
     void createNewTask();

@@ -13,8 +13,8 @@
 #include <QJsonObject>
 #include <QString>
 
-RegistrationWindow::RegistrationWindow(QWidget *parent)
-    : QDialog(parent)
+RegistrationWindow::RegistrationWindow(const QUrl &mainServerUrl, QWidget *parent)
+    : QDialog(parent), mainServerUrl(mainServerUrl)
 {
     /*this->setStyleSheet(
         "background-color: #e0f7e0;"  // неудачная попытка изменения цвета
@@ -109,7 +109,7 @@ void RegistrationWindow::on_registerButton_clicked() {
 
     // Если данные корректные, продолжаем с отправкой запроса
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url("http://localhost:8080"); // Замените на ваш URL
+    QUrl url = mainServerUrl; // Замените на ваш URL
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
