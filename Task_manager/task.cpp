@@ -95,8 +95,8 @@ Task::Task(const QString &smallServerUrl, QWidget *parent)
     connect(closeButton, &QPushButton::clicked, this, &QWidget::close);
 }
 
-Task::Task(const QString &smallServerUrl, QWidget *parent, QString task_name, QString task_text) // конструктор класса таск с передачей параметров
-    : QWidget(parent), smallServerUrl(smallServerUrl) {
+Task::Task(const QString &smallServerUrl, QWidget *parent, QString task_name, QString task_text, int task_id) // конструктор класса таск с передачей параметров
+    : QWidget(parent), smallServerUrl(smallServerUrl), task_id(task_id) {
 
     QVBoxLayout *layout = new QVBoxLayout(this);
 
@@ -175,6 +175,10 @@ Task::Task(const QString &smallServerUrl, QWidget *parent, QString task_name, QS
     connect(openButton, &QPushButton::clicked, this, &Task::openTask);
     connect(saveButton, &QPushButton::clicked, this, &Task::saveTask);
     connect(closeButton, &QPushButton::clicked, this, &QWidget::close);
+
+    qDebug() << "task_id: " << task_id;
+    qDebug() << "task_name: " << task_name;
+    qDebug() << "task_text: " << task_text;
 }
 
 void Task::markAsDone() {
@@ -189,11 +193,9 @@ void Task::markAsDone() {
     json["action"] = "destruction";
     json["login"] = user_login_global;
     json["task_id"] = task_id;
-    json["task_name"] = titleEdit->text(); // Указываем название задачи
-    json["task_text"] = descriptionEdit->toPlainText(); // Указываем описание задачи
     // Преобразуем JSON объект в документ и выводим его в консоль для отладки
     QJsonDocument jsonDoc(json);
-
+    qDebug() << jsonDoc;
     // Отправляем POST запрос
     QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
 
@@ -205,23 +207,30 @@ void Task::markAsDone() {
             QJsonObject jsonObject = jsonResponse.object();
 
             // Проверяем сообщение от сервера
-            QString message = jsonObject["message"].toString();
-            if (message == "Destruction successful!") {
-                QMessageBox::information(this, "Задача удалена", message);
+            if (jsonObject.contains("message")) {
+                QString message = jsonObject["message"].toString();
+                if (message == "Destruction successful!") {
+                    QMessageBox::information(this, "Задача удалена", message);
+                    this->deleteLater(); // Удаляем объект Task после успешного удаления задачи
+                } else {
+                    QMessageBox::warning(this, "Ошибка при удалении задачи", message);
+                }
+            } else if (jsonObject.contains("error")) {
+                QString errorMessage = jsonObject["error"].toString();
+                QMessageBox::warning(this, "Ошибка", "Ошибка сервера: " + errorMessage);
             } else {
-                QMessageBox::warning(this, "Ошибка при удалении задачи", message);
+                QMessageBox::warning(this, "Ошибка", "Неизвестный ответ от сервера");
             }
         } else {
             QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
         }
         reply->deleteLater(); // Освобождаем память
-        this->deleteLater();
     });
 
     // Обрабатываем ошибки сети
     connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
         QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
-        this->deleteLater();
+        reply->deleteLater(); // Освобождаем память
     });
 }
 
@@ -278,7 +287,7 @@ void Task::saveTask() {
 
             // Проверяем сообщение от сервера
             QString message = jsonObject["message"].toString();
-            QString task_id_temp = jsonObject["task_id"].toString();
+            int task_id_temp = jsonObject["task_id"].toInt();
             if (message == "Task creation successful!") {
                 task_id=task_id_temp;
                 QMessageBox::information(this, "Задача сохранена", message);

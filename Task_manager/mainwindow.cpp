@@ -284,6 +284,7 @@ void MainWindow::on_authLoginButton_clicked()
 
 void MainWindow::on_refreshButton_clicked(){
     updateUsersOnline();
+    Load_list_of_tasks();
 }
 
 bool MainWindow::isServerAvailable(const QString &serverUrl) {
@@ -383,12 +384,13 @@ void MainWindow::Load_list_of_tasks()
                     for (const QJsonValue& taskValue : listOfTasks) {
                         // Каждый элемент массива — это массив из двух элементов
                         QJsonArray taskArray = taskValue.toArray();
-                        if (taskArray.size() == 2) {
-                            QString taskName = taskArray[0].toString(); // Имя задачи
-                            QString taskText = taskArray[1].toString(); // Текст задачи
+                        if (taskArray.size() == 3) {
+                            int task_id = taskArray[0].toInt(); // Идентификатор задачи
+                            QString taskName = taskArray[1].toString(); // Имя задачи
+                            QString taskText = taskArray[2].toString(); // Текст задачи
 
                             // Создаем объект Task
-                            Task *newTask = new Task(smallServerUrl, this, taskName, taskText);
+                            Task *newTask = new Task(smallServerUrl, this, taskName, taskText, task_id);
                             tasksLayout->addWidget(newTask);
                         } else {
                             qWarning() << "Invalid task format:" << taskArray;
