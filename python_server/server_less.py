@@ -13,7 +13,7 @@ def connecting_to_database():
         port='5432',
         database='small_server_database',
         user='postgres',
-        password=''
+        password='miumiau'
     )
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -443,7 +443,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
-            logger.debug("Executing query: SELECT task_name, task_text FROM tasks WHERE owner = %s")
+            logger.debug("Executing query: SELECT task_id, task_name, task_text FROM tasks WHERE owner = %s")
              # Получаем user_id по логину
             cursor.execute("SELECT user_id FROM users_small_server WHERE login = %s", (login,))
             user_id_list = cursor.fetchall()
@@ -452,7 +452,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             user_id = user_id_list[0][0]
         
             # Получаем список задач для данного user_id
-            cursor.execute("SELECT task_name, task_text FROM tasks WHERE owner = %s", (user_id,))
+            cursor.execute("SELECT task_id, task_name, task_text FROM tasks WHERE owner = %s", (user_id,))
             list_of_tasks = cursor.fetchall()
             print(list_of_tasks)
             cursor.execute("SELECT project_name, project_text FROM projects WHERE owner = %s", (user_id,))
@@ -476,7 +476,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
  
     
 
-def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, port=8083):
+def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, port=8081):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
     logger.info(f'Starting server on port {port}...')
