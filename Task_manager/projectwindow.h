@@ -15,7 +15,7 @@ public:
     explicit ProjectWindow(QWidget *parent = nullptr);
     ~ProjectWindow();
 signals:
-    void savetask ();// Сигнал для сохранения подзадачи
+    void addtask ();// Сигнал для добавления подзадачи
 public slots:
     void textChanged(); // Слот для изменения цвета веса подзадачи
     void on_inviteButton_clicked(); // Слот для приглашения пользователя к подзадаче

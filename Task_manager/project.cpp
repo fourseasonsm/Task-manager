@@ -10,7 +10,14 @@
 #include <QScrollArea>
 #include <QTextEdit>
 #include <QIntValidator>
-
+#include <QFrame>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QUrl>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QMessageBox>
 
 Project::Project(QWidget *parent)
     : QWidget(parent) {
@@ -111,9 +118,10 @@ Project::Project(QWidget *parent)
     // Разрешение изменения размера окна
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    connect(doneButton, &QPushButton::clicked, this, &Project::markAsDone);
     connect(openButton, &QPushButton::clicked, this, &Project::openProject);
     connect(subTaskButton, &QPushButton::clicked, this, &Project::addSubTask);
+    connect(doneButton, &QPushButton::clicked, this, &Project::extractSubTasksInfo);
+    connect(saveButton, &QPushButton::clicked, this, &Project::saveProject);
 }
 
 void Project::markAsDone() {
@@ -122,13 +130,64 @@ void Project::markAsDone() {
 void Project::openProject() {
 
     ProjectWindow *projectWindow = new ProjectWindow(this);
-    connect(projectWindow, SIGNAL(savetask()), this, SLOT(addSubTask()));
+    connect(projectWindow, SIGNAL(addtask()), this, SLOT(addSubTask()));
 
     projectWindow->show();
 }
 
 void Project::saveProject() {
+    QString temp = extractSubTasksInfo();
+    // Проверка на пустые поля
+    if (titleEdit->text().isEmpty() || descriptionEdit->toPlainText().isEmpty()) {
+        QMessageBox::warning(this, "Ошибка", "Название и описание не могут быть пустыми");
+        return;
+    }
 
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QUrl url(smallServerUrl); // Замените на ваш URL
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    // Создаем JSON объект с данными для авторизации
+    QJsonObject json;
+    json["action"] = "save_project";
+    json["login"] = user_login_global;
+    json["project_name"] = titleEdit->text(); // Указываем название задачи
+    json["project_text"] = descriptionEdit->toPlainText(); // Указываем название задачи
+    json["subtasks"] =temp; // Указываем название задачи
+
+    // Преобразуем JSON объект в документ и выводим его в консоль для отладки
+    QJsonDocument jsonDoc(json);
+
+    // Отправляем POST запрос
+    QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+
+    // Обрабатываем ответ
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            QString response = QString::fromUtf8(reply->readAll()).trimmed();
+            QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+            QJsonObject jsonObject = jsonResponse.object();
+
+            // Проверяем сообщение от сервера
+            QString message = jsonObject["message"].toString();
+            QString project_id_temp = jsonObject["task_id"].toString();
+            if (message == "project creation successful!") {
+                project_id=project_id_temp;
+                QMessageBox::information(this, "Проект сохранен", message);
+            } else {
+                QMessageBox::warning(this, "Ошибка при сохранении проекта", message);
+            }
+        } else {
+            QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
+        }
+        reply->deleteLater(); // Освобождаем память
+    });
+
+    // Обрабатываем ошибки сети
+    connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
+        QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
+    });
 }
 
 void Project::addSubTask() {
@@ -149,15 +208,27 @@ void Project::addSubTask() {
     subTaskWeight->setAlignment(Qt::AlignCenter);
     subTaskWeight->setStyleSheet("background-color: #e1f0db; color: black; font-size: 10px; outline: none; border: none;");
 
+    // Поле для ввода назначенного пользователя
+    QLineEdit *assignedUser = new QLineEdit(this);
+    assignedUser->setPlaceholderText("Кому назначено");
+    assignedUser->setFixedHeight(22);
+    assignedUser->setStyleSheet("background-color: #e1f0db; color: black; font-size: 14px; outline: none; border: none;");
+
     // Создаём кнопку "Пригласить"
     QPushButton *inviteButton = new QPushButton("Пригласить", this);
     inviteButton->setStyleSheet("background-color: #3b4f2a; color: white; font-size: 12px; outline: none; border: none; border-radius: 5px; padding: 3px 8px;");
     inviteButton->setFixedHeight(22);
 
-    // Добавляем поле ввода и кнопку в горизонтальный слой
+    // Создаём метку для отображения приглашённого пользователя
+    QLabel *invitedUserLabel = new QLabel(this);
+    invitedUserLabel->setStyleSheet("color: black; font-size: 12px;");
+
+    // Добавляем все элементы в горизонтальный слой
     subTaskLayout->addWidget(newSubTask);
     subTaskLayout->addWidget(subTaskWeight);
+    subTaskLayout->addWidget(assignedUser); // Добавляем поле для назначения
     subTaskLayout->addWidget(inviteButton);
+    subTaskLayout->addWidget(invitedUserLabel);
 
     // Добавляем подзадачу в контейнер
     subTasksLayout->addLayout(subTaskLayout);
@@ -169,15 +240,56 @@ void Project::addSubTask() {
     connect(subTaskWeight, &QLineEdit::textChanged, this, &Project::textChanged);
 
     // Подключаем сигнал кнопки "Пригласить" к слоту
-    connect(inviteButton, &QPushButton::clicked, this, &Project::on_inviteButton_clicked);
+    connect(inviteButton, &QPushButton::clicked, this, &Project::on_invite_clicked);
 }
 
-void Project::on_inviteButton_clicked() {
-
+void Project::invite_user(const QString &invited_user_login){
+    assignedUser->setText(invited_user_login);
+}
+void Project::on_invite_clicked(){
     InviteWindow *inviteWindow = new InviteWindow(this);
+    connect(inviteWindow, SIGNAL(invite_user(const QString)), this, SLOT(invite_user(QString)));
     inviteWindow->show();
 }
+QString Project::extractSubTasksInfo() {
+    // List to store sub-task information
+    QString subTasksInfo;
 
+    // Check if subTasksLayout is initialized
+    if (!subTasksLayout) {
+        qDebug() << "subTasksLayout is not initialized!";
+        return subTasksInfo; // Return empty list
+    }
+
+    // Iterate through the subTasksLayout
+    for (int i = 0; i < subTasksLayout->count(); ++i) {
+        QLayoutItem *item = subTasksLayout->itemAt(i);
+
+        // Check if the item is a layout (QHBoxLayout)
+        if (QHBoxLayout *subTaskLayout = qobject_cast<QHBoxLayout *>(item->layout())) {
+            QString taskName;
+            int taskWeight = 0;
+            QString assignedUser;
+
+            // Iterate through the widgets in the QHBoxLayout
+            for (int j = 0; j < subTaskLayout->count(); ++j) {
+                QLayoutItem *subItem = subTaskLayout->itemAt(j);
+
+                // Check if the item is a widget
+                if (QWidget *widget = subItem->widget()) {
+                    // If it's the QLineEdit for the task name
+                    if (QLineEdit *taskNameEdit = qobject_cast<QLineEdit *>(widget)) {
+                        taskName = taskNameEdit->text(); // Get the task name
+                        subTasksInfo=subTasksInfo+taskName+',';
+                    }
+                }
+            // Store the task information if valid
+            }
+        }
+    subTasksInfo = subTasksInfo + ';'; // Debug output
+    }
+    return subTasksInfo; // Return the list of sub-task information
+}
 void Project::textChanged() {
     QLineEdit *subTaskWeight = qobject_cast<QLineEdit*>(sender());
     if (!subTaskWeight) return;

@@ -161,6 +161,7 @@ void ProjectWindow::on_addButton_clicked() {
     connect(inviteButton, &QPushButton::clicked, this, &ProjectWindow::on_inviteButton_clicked);
     connect(saveButton, &QPushButton::clicked, this, &ProjectWindow::on_saveButton_clicked);
     connect(deleteButton, &QPushButton::clicked, this, &ProjectWindow::on_deleteButton_clicked);
+    emit addtask();
 }
 
 void ProjectWindow::on_inviteButton_clicked() {
@@ -172,7 +173,7 @@ void ProjectWindow::on_deleteButton_clicked() {
 }
 
 void ProjectWindow::on_saveButton_clicked() {
-    emit savetask();
+
 }
 
 void ProjectWindow::textChanged() {
