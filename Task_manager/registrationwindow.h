@@ -8,14 +8,12 @@
 class QLineEdit;
 class QPushButton;
 
-extern QString user_login_global; // глобальная переменная которая которая хранит юзера
-
 class RegistrationWindow : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit RegistrationWindow(QWidget *parent = nullptr, QTcpSocket *existingSocket = nullptr);
+    explicit RegistrationWindow(QWidget *parent = nullptr);
 
     static void addShadowEffect(QWidget *widget);
 
@@ -24,7 +22,6 @@ private slots:
     bool registerUser(); // Новый слот для регистрации
 
 private:
-    QTcpSocket *socket;  // Используем переданный сокет
     QLineEdit *loginEdit;
     QLineEdit *emailEdit;
     QLineEdit *passwordEdit;
