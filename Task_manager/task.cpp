@@ -175,10 +175,6 @@ Task::Task(const QString &smallServerUrl, QWidget *parent, QString task_name, QS
     connect(openButton, &QPushButton::clicked, this, &Task::openTask);
     connect(saveButton, &QPushButton::clicked, this, &Task::saveTask);
     connect(closeButton, &QPushButton::clicked, this, &QWidget::close);
-
-    qDebug() << "task_id: " << task_id;
-    qDebug() << "task_name: " << task_name;
-    qDebug() << "task_text: " << task_text;
 }
 
 void Task::markAsDone() {
