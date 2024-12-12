@@ -353,7 +353,6 @@ void MainWindow::updateUsersOnline() {
 void MainWindow::Load_list_of_tasks()
 {
     if (isLoggedIn) {
-        // Проверка на пустые поля
         QNetworkAccessManager *manager = new QNetworkAccessManager(this);
         QUrl url(smallServerUrl); // Замените на ваш URL
         QNetworkRequest request(url);
@@ -363,7 +362,6 @@ void MainWindow::Load_list_of_tasks()
         QJsonObject json;
         json["action"] = "list_of_tasks";
         json["login"] = user_login_global; // Замените на ваше поле логина
-        // Преобразуем JSON объект в документ и выводим его в консоль для отладки
         QJsonDocument jsonDoc(json);
 
         // Отправляем POST запрос
@@ -378,26 +376,22 @@ void MainWindow::Load_list_of_tasks()
 
                 // Проверяем сообщение от сервера
                 QString message = jsonObject["message"].toString();
-                QString list_of_tasks = jsonObject["list_of_tasks"].toString();
-                int counter = 0;
                 if (message == "List sended") {
-                    QString temp = "";
-                    QString task_name_temp;
-                    for (int i =0;i<=list_of_tasks.size()-1;i++){
-                        if(list_of_tasks[i] != ','){
-                            temp = temp + list_of_tasks[i];
-                        }
-                        else {
-                            if (counter % 2 == 0){
-                                task_name_temp = temp;
-                                temp = "";
-                            }
-                            else {
-                                Task *newTask = new Task(smallServerUrl, this,task_name_temp,temp);
-                                tasksLayout->addWidget(newTask);
-                                temp = "";
-                            }
-                            counter++;
+                    // Получаем список задач
+                    QJsonArray listOfTasks = jsonObject["list_of_tasks"].toArray();
+
+                    for (const QJsonValue& taskValue : listOfTasks) {
+                        // Каждый элемент массива — это массив из двух элементов
+                        QJsonArray taskArray = taskValue.toArray();
+                        if (taskArray.size() == 2) {
+                            QString taskName = taskArray[0].toString(); // Имя задачи
+                            QString taskText = taskArray[1].toString(); // Текст задачи
+
+                            // Создаем объект Task
+                            Task *newTask = new Task(smallServerUrl, this, taskName, taskText);
+                            tasksLayout->addWidget(newTask);
+                        } else {
+                            qWarning() << "Invalid task format:" << taskArray;
                         }
                     }
                     QMessageBox::information(this, "Загрузка задач", "Загрузка задач прошла успешно");
@@ -414,7 +408,6 @@ void MainWindow::Load_list_of_tasks()
         connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
             QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
         });
-
 
         // Центрируем все задачи по верхнему краю контейнера
         tasksLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
