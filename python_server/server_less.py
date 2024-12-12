@@ -148,7 +148,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             connect = connecting_to_database()
             cursor = connect.cursor()
 
-            # Сохраняем проект и подзадачу
+            # сохренение отправленного проекта как своего проекта при согласии
             cursor.execute("INSERT INTO projects (project_name, project_text, owner_login, taker_login) VALUES (%s, %s, %s, %s) RETURNING project_id", (project_name, project_text, owner_login, taker_login))
             project_id = cursor.fetchone()[0]
 
@@ -157,7 +157,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             connect.commit()
             logger.debug(f"Проект {project_name} сохранен для пользователя {taker_login}")
 
-            # Отправляем уведомление обратно на сервер-хозяина
+            # отправляем согласие хозяину проекта
             self.notify_owner_server(owner_login, project_id, subtask_id)
 
             return {
@@ -182,22 +182,20 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             connect = connecting_to_database()
             cursor = connect.cursor()
 
-            # Получаем URL сервера-хозяина
+            # ищем сервер хозяина проекта
             owner_server_url = self.get_user_server_url(owner_login)
             if not owner_server_url:
                 return {
                     'error': 'Сервер пользователя не найден'
                 }  
-
-            # Подготовка данных для уведомления
+            # че отправляем
             notification_data = {
                 "action": "subtask_status_update",
                 "project_id": project_id,
                 "subtask_id": subtask_id,
-                "status": status  # Статус: "accepted" или "declined"
+                "status": status  
             }
 
-            # Отправка уведомления
             response = requests.post(owner_server_url, json=notification_data)
             response.raise_for_status()
             logger.debug(f"Уведомление отправлено на сервер {owner_server_url}")
@@ -211,7 +209,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
     def handle_user_decline(self, project_name, owner_login, subtask_id, taker_login):
         try:
-            # Отправляем уведомление обратно на сервер-хозяина с указанием статуса "declined"
+            # если отказ то ответ будет declined
             self.notify_owner_server(owner_login, None, subtask_id, "declined")
 
             logger.debug(f"Пользователь {taker_login} отказался от проекта {project_name}")
@@ -233,10 +231,10 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             cursor = connect.cursor()
 
             if status == "accepted":
-                # Если подзадача принята, обновляем статус
+                # если подзадача принята обновляем ее статус
                 cursor.execute("UPDATE subtasks SET status = 'accepted', taker_login = %s WHERE project_id = %s AND subtask_id = %s", (taker_login, project_id, subtask_id))
             elif status == "declined":
-                # Если подзадача отклонена, возвращаем ее статус к исходному (взятому хозяином проекта)
+                # если задачу не взяли то оставляем ее статус каким был, то есть взята тем кто создал проект
                 cursor.execute(
                 "UPDATE subtasks SET status = 'in_progress', taker_login = %s WHERE project_id = %s AND subtask_id = %s", (owner_login, project_id, subtask_id))
 
@@ -372,68 +370,62 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
 
-    def project_creation(self, project_id, owner_id, project_name, project_text, 
-                          login,
-                          subtask1_text, subtask1_weight,
-                          subtask2_text, subtask2_weight,
-                          subtask3_text, subtask3_weight
-                         ): #ВВЕСТИ ДВОЙНОЙ ID
+    def project_creation(self, project_name, project_text, login,
+                     subtask1_text, subtask1_weight,
+                     subtask2_text, subtask2_weight,
+                     subtask3_text, subtask3_weight): # при создании проекта все его подзадачи автоматически назначаются пользователю создателю и имеют статус выполнены
         connect = None
         cursor = None
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
 
+            # Получаем user_id по логину
             cursor.execute("SELECT user_id FROM users_small_server WHERE login = %s", (login,))
             user_id_list = cursor.fetchall()
             if not user_id_list:
                 return {'message': 'User not found'}
             user_id = user_id_list[0][0]
 
-            #изначально foreign id иницилизируется обычным id, нужен он для однозначности проекта при пересылке
-            logger.debug("Executing query: INSERT INTO project (project_name, project_text, owner) VALUES (%s, %s, %s)")
-            cursor.execute("INSERT INTO project (project_name, project_text, owner) VALUES (%s, %s, %s)", (project_name, project_text, user_id))
-            connect.commit()
-
-            cursor.execute("SELECT MAX(project_id) FROM project")
+            # Создаем проект
+            cursor.execute(
+                "INSERT INTO project (project_name, project_text, owner) VALUES (%s, %s, %s) RETURNING project_id",
+                (project_name, project_text, user_id)
+            )
             project_id = cursor.fetchone()[0]
-            
-            logger.debug("Executing query: INSERT INTO subtasks (project, subtask1_text, taker1_id, subtask1_weight) VALUES (%s, %s, %s, %s)")
-            cursor.execute("INSERT INTO subtasks (project, subtask1_text, taker1_id, subtask1_weight) VALUES (%s, %s, %s, %s)", (project_id, subtask1_text, user_id, subtask1_weight))
             connect.commit()
-            
-            cursor.execute("SELECT subtask1_id FROM subtasks WHERE project = %s", (project_id,))
-            subtask1_id_list = cursor.fetchall()
-            subtask1_id = subtask1_id_list[0][0]
+            logger.debug(f"Project '{project_name}' created with ID {project_id}")
 
-            logger.debug("Executing query: INSERT INTO subtasks (project, subtask2_text, taker2_id, subtask2_weight) VALUES (%s, %s, %s, %s)")
-            cursor.execute("INSERT INTO subtasks (project, subtask2_text, taker2_id, subtask2_weight) VALUES (%s, %s, %s, %s)", (project_id, subtask2_text, user_id, subtask2_weight))
-            connect.commit()
+            # Список подзадач
+            subtasks = [
+                (subtask1_text, subtask1_weight),
+                (subtask2_text, subtask2_weight),
+                (subtask3_text, subtask3_weight)
+            ]
 
-            cursor.execute("SELECT subtask2_id FROM subtasks WHERE project = %s", (project_id,))
-            subtask2_id_list = cursor.fetchall()
-            subtask2_id = subtask2_id_list[0][0]
+            subtask_ids = []
 
-            logger.debug("Executing query: INSERT INTO subtasks (project, subtask3_text, taker3_id, subtask3_weight) VALUES (%s, %s, %s, %s)")
-            cursor.execute("INSERT INTO subtasks (project, subtask3_text, taker3_id, subtask3_weight) VALUES (%s, %s, %s, %s)", (project_id, subtask3_text, user_id, subtask3_weight))
-            connect.commit()
-
-            cursor.execute("SELECT subtask3_id FROM subtasks WHERE project = %s", (project_id,))
-            subtask3_id_list = cursor.fetchall()
-            subtask3_id = subtask3_id_list[0][0]
+            # Добавляем подзадачи
+            for subtask_text, subtask_weight in subtasks:
+                cursor.execute("INSERT INTO subtasks (project, subtask_text, taker_id, subtask_weight) VALUES (%s, %s, %s, %s) RETURNING subtask_id",
+                (project_id, subtask_text, user_id, subtask_weight)
+            )
+                subtask_id = cursor.fetchone()[0]
+                subtask_ids.append(subtask_id)
+                connect.commit()
+                logger.debug(f"Subtask '{subtask_text}' added with ID {subtask_id}")
 
             logger.debug("Project creation successful")
 
             return {
-                'message': 'Project creation successful!', #менять нельзя, обрабатывается в клиенте
+                'message': 'Project creation successful!',
                 'project_name': project_name,
                 'project_id': project_id,
-                'owner_id': owner_id,
-                'subtask1_id': subtask1_id,
-                'subtask2_id': subtask2_id,
-                'subtask3_id': subtask3_id
+                'subtask1_id': subtask_ids[0],
+                'subtask2_id': subtask_ids[1],
+                'subtask3_id': subtask_ids[2]
             }
-        
+
         except Exception as e:
             logger.error(f"Error during project creation: {e}")
             return {
