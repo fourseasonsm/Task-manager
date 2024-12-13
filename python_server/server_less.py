@@ -21,7 +21,7 @@ def connecting_to_database():
         port='5432',
         database='small_server_database',
         user='postgres',
-        password=''
+        password='miu'
     )
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -76,7 +76,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             response = self.handle_register(login, user_id, server_url)
         elif action == 'destruction':
             response = self.task_destruction(task_id)
-        elif action == 'project_creation':
+        elif action == 'save_project':
             response = self.project_creation(project_id, project_name, project_text, login)
         elif action == 'project_destruction':
             response = self.project_destruction(project_name, project_text, login)

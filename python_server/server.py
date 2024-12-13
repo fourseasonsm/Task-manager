@@ -30,7 +30,7 @@ def connecting_to_database():
         port='5432',
         database='server_database',
         user='postgres',
-        password='miumiau'
+        password='miu'
     )
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):

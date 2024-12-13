@@ -290,6 +290,45 @@ QString Project::extractSubTasksInfo() {
     }
     return subTasksInfo; // Return the list of sub-task information
 }
+
+void Project::setTitle(const QString& title) {
+    titleEdit->setText(title);
+}
+
+void Project::setDescription(const QString& description) {
+    descriptionEdit->setText(description);
+}
+
+void Project::addSubTaskFromServer(int subtask_id, const QString& subtask_text, int subtask_weight, const QString& status, int number) {
+    QHBoxLayout *subTaskLayout = new QHBoxLayout();
+
+    // Поле для названия подзадачи
+    QLineEdit *newSubTask = new QLineEdit(this);
+    newSubTask->setText(subtask_text);
+    newSubTask->setFixedHeight(22);
+    newSubTask->setStyleSheet("background-color: #e1f0db; color: black; font-size: 14px; outline: none; border: none;");
+
+    // Поле для веса подзадачи
+    QLineEdit *subTaskWeight = new QLineEdit(this);
+    subTaskWeight->setText(QString::number(subtask_weight));
+    subTaskWeight->setValidator(new QIntValidator(1, 10, this));
+    subTaskWeight->setFixedSize(25, 22);
+    subTaskWeight->setAlignment(Qt::AlignCenter);
+    subTaskWeight->setStyleSheet("background-color: #e1f0db; color: black; font-size: 10px; outline: none; border: none;");
+
+    // Поле для статуса подзадачи
+    QLabel *statusLabel = new QLabel(status, this);
+    statusLabel->setStyleSheet("color: black; font-size: 12px;");
+
+    // Добавляем все элементы в горизонтальный слой
+    subTaskLayout->addWidget(newSubTask);
+    subTaskLayout->addWidget(subTaskWeight);
+    subTaskLayout->addWidget(statusLabel);
+
+    // Добавляем подзадачу в контейнер
+    subTasksLayout->addLayout(subTaskLayout);
+}
+
 void Project::textChanged() {
     QLineEdit *subTaskWeight = qobject_cast<QLineEdit*>(sender());
     if (!subTaskWeight) return;

@@ -20,6 +20,9 @@ public:
 public slots:
     void addSubTask(); // Слот для создания новой задачи
     void invite_user(const QString &invited_user_login); // Слот для приглашения юзера
+    void setTitle(const QString& title);
+    void setDescription(const QString& description);
+    void addSubTaskFromServer(int subtask_id, const QString& subtask_text, int subtask_weight, const QString& status, int number);
 
 private slots:
     QString extractSubTasksInfo();
@@ -29,7 +32,9 @@ private slots:
     void textChanged(); // Слот для изменения цвета веса подзадачи
     void saveProject(); // Слот для сохранения задачи
 
+
 private:
+
     QLineEdit *titleEdit; // Поле для редактирования названия
     QLabel *invitedUserLabel; // Поле для редактирования названия
     QTextEdit *descriptionEdit; // Поле для редактирования описания

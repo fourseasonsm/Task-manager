@@ -1,3 +1,11 @@
+#include "mainwindow.h"
+#include "loginwindow.h"
+#include "global.h"
+#include "registrationwindow.h"
+#include "projectwindow.h"
+#include "task.h"
+#include "taskwindow.h"
+#include "project.h"
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -17,14 +25,6 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
-#include "mainwindow.h"
-#include "loginwindow.h"
-#include "global.h"
-#include "registrationwindow.h"
-#include "projectwindow.h"
-#include "task.h"
-#include "taskwindow.h"
-#include "global.h"
 
 bool isLoggedIn = false;
 QString user_login_global="NULL";
@@ -228,6 +228,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     setLayout(mainLayout); // Устанавливаем главный слой для окна
 }
 
+
 // Слот для создания новой задачи
 void MainWindow::createNewTask() {
     if (isLoggedIn == true) {
@@ -273,14 +274,14 @@ void MainWindow::on_authLoginButton_clicked()
         updateUserName(user_login_global); // Обновляем имя пользователя
         updateAuthButtons();
         updateUsersOnline();
-        updateListOfTask();
+        Load_list_of_tasks();
     }
 
 }
 
 void MainWindow::on_refreshButton_clicked(){
     updateUsersOnline();
-    updateListOfTask();
+    Load_list_of_tasks();
 }
 
 bool MainWindow::isServerAvailable(const QString &serverUrl) {
@@ -348,26 +349,14 @@ void MainWindow::updateUsersOnline() {
     });
 }
 
-void MainWindow::deleteTasks() {
-    QLayoutItem *item;
-    while ((item = tasksLayout->takeAt(0)) != nullptr) {
-        if (QWidget *widget = item->widget()) {
-            Task *task = qobject_cast<Task*>(widget);
-            if (task) {
-                task->deleteLater();
-            } else {
-                delete widget;
-            }
-        } else {
-            delete item->layout();
-        }
-    }
-}
-
-void MainWindow::updateListOfTask()
+/* void MainWindow::Load_list_of_tasks()
 {
     if (isLoggedIn) {
-         deleteTasks();
+        QList<Task*> taskWidgets = tasksLayout->findChildren<Task*>();
+        for (Task* task : taskWidgets) {
+            tasksLayout->removeWidget(task); // Удаляем виджет из макета
+            task->deleteLater(); // Удаляем объект Task
+        }
 
         QNetworkAccessManager *manager = new QNetworkAccessManager(this);
         QUrl url(smallServerUrl); // Замените на ваш URL
@@ -395,7 +384,7 @@ void MainWindow::updateListOfTask()
                 if (message == "List sended") {
                     // Получаем список задач
                     QJsonArray listOfTasks = jsonObject["list_of_tasks"].toArray();
-                    
+
                     for (const QJsonValue& taskValue : listOfTasks) {
                         // Каждый элемент массива — это массив из двух элементов
                         QJsonArray taskArray = taskValue.toArray();
@@ -433,6 +422,136 @@ void MainWindow::updateListOfTask()
         tasksLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
     }
 }
+*/
+
+void MainWindow::Load_list_of_tasks() {
+    if (isLoggedIn) {
+        // Очищаем текущие задачи
+        QList<Task*> taskWidgets = tasksLayout->findChildren<Task*>();
+        for (Task* task : taskWidgets) {
+            tasksLayout->removeWidget(task); // Удаляем виджет из макета
+            task->deleteLater(); // Удаляем объект Task
+        }
+
+        // Очищаем текущие проекты
+        QList<Project*> projectWidgets = tasksLayout->findChildren<Project*>();
+        for (Project* project : projectWidgets) {
+            tasksLayout->removeWidget(project); // Удаляем виджет из макета
+            project->deleteLater(); // Удаляем объект Project
+        }
+
+        // Отправляем запрос на сервер
+        QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+        QUrl url(smallServerUrl); // Замените на ваш URL
+        QNetworkRequest request(url);
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+        // Создаем JSON объект с данными для запроса
+        QJsonObject json;
+        json["action"] = "list_of_tasks";
+        json["login"] = user_login_global; // Замените на ваше поле логина
+        QJsonDocument jsonDoc(json);
+
+        // Отправляем POST запрос
+        QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+
+        // Обрабатываем ответ
+        connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+            if (reply->error() == QNetworkReply::NoError) {
+                QString response = QString::fromUtf8(reply->readAll()).trimmed();
+                QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+                QJsonObject jsonObject = jsonResponse.object();
+
+                // Проверяем сообщение от сервера
+                QString message = jsonObject["message"].toString();
+                if (message == "List sended") {
+                    // Получаем список задач
+                    QJsonArray listOfTasks = jsonObject["list_of_tasks"].toArray();
+
+                    for (const QJsonValue& taskValue : listOfTasks) {
+                        // Каждый элемент массива — это массив из трех элементов
+                        QJsonArray taskArray = taskValue.toArray();
+                        if (taskArray.size() == 3) {
+                            int task_id = taskArray[0].toInt(); // Идентификатор задачи
+                            QString taskName = taskArray[1].toString(); // Имя задачи
+                            QString taskText = taskArray[2].toString(); // Текст задачи
+
+                            // Создаем объект Task
+                            Task *newTask = new Task(smallServerUrl, this, taskName, taskText, task_id);
+                            tasksLayout->addWidget(newTask);
+                        } else {
+                            qWarning() << "Invalid task format:" << taskArray;
+                        }
+                    }
+
+                    // Получаем список проектов
+                    QJsonArray listOfProjects = jsonObject["list_of_projects"].toArray();
+
+                    for (const QJsonValue& projectValue : listOfProjects) {
+                        // Каждый элемент массива — это массив из четырех элементов
+                        QJsonArray projectArray = projectValue.toArray();
+                        if (projectArray.size() == 4) {
+                            int project_id = projectArray[0].toInt(); // Идентификатор проекта
+                            QString projectName = projectArray[1].toString(); // Имя проекта
+                            QString projectText = projectArray[2].toString(); // Текст проекта
+                            QJsonArray subtasksArray = projectArray[3].toArray(); // Список подзадач
+
+                            // Создаем объект Project
+                            Project *newProject = new Project(this);
+                            newProject->setTitle(projectName); // Устанавливаем название проекта
+                            newProject->setDescription(projectText); // Устанавливаем описание проекта
+
+                            // Добавляем подзадачи
+                            for (const QJsonValue& subtaskValue : subtasksArray) {
+                                QJsonArray subtaskData = subtaskValue.toArray();
+                                if (subtaskData.size() == 5) {
+                                    int subtask_id = subtaskData[0].toInt(); // Идентификатор подзадачи
+                                    QString subtask_text = subtaskData[1].toString(); // Текст подзадачи
+                                    int subtask_weight = subtaskData[2].toInt(); // Вес подзадачи
+                                    QString status = subtaskData[3].toString(); // Статус подзадачи
+                                    int number = subtaskData[4].toInt(); // Порядковый номер подзадачи
+
+                                    // Добавляем подзадачу в проект
+                                    newProject->addSubTaskFromServer(subtask_id, subtask_text, subtask_weight, status, number);
+                                } else {
+                                    qWarning() << "Invalid subtask format:" << subtaskData;
+                                }
+                            }
+
+                            tasksLayout->addWidget(newProject);
+                        } else {
+                            qWarning() << "Invalid project format:" << projectArray;
+                        }
+                    }
+
+                    // Выводим сообщение в зависимости от наличия задач и проектов
+                    if (listOfTasks.isEmpty() && listOfProjects.isEmpty()) {
+                        QMessageBox::information(this, "Нет задач и проектов", "Вы еще не создали задач и проектов.");
+                    } else if (listOfTasks.isEmpty()) {
+                        QMessageBox::information(this, "Нет задач", "Вы еще не создали задач.");
+                    } else if (listOfProjects.isEmpty()) {
+                        QMessageBox::information(this, "Нет проектов", "Вы еще не создали проектов.");
+                    } else {
+                        QMessageBox::information(this, "Загрузка задач и проектов", "Загрузка задач и проектов прошла успешно");
+                    }
+                } else {
+                    QMessageBox::warning(this, "Ошибка при получении списка", message);
+                }
+            } else {
+                QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
+            }
+            reply->deleteLater(); // Освобождаем память
+        });
+
+        // Обрабатываем ошибки сети
+        connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
+            QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
+        });
+
+        // Центрируем все задачи и проекты по верхнему краю контейнера
+        tasksLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
+    }
+}
 
 // Нажатие на кнопку для перехода к окну регистрации
 void MainWindow::on_regButton_clicked()
@@ -461,13 +580,12 @@ void MainWindow::on_logoutButton_clicked()
 
     // Отправляем POST запрос
     QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
-    
+
     user_login_global = "NULL";
     isLoggedIn = false;
     updateUserName(user_login_global);
     updateAuthButtons();
     updateUsersOnline();
-    deleteTasks();
 }
 
 // Меняем кнопки "Войти" и "Зарегистрироваться" на "Выйти" и наоборот

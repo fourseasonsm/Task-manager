@@ -40,6 +40,7 @@ private:
     void deleteTasks();
     void updateListOfTask();
     void updateUsersOnline();
+    void Load_list_of_tasks();
 
     QScrollArea *scrollArea; // Указатель на QScrollArea
     QVBoxLayout *tasksLayout; // Layout для хранения задач
