@@ -30,7 +30,7 @@ def connecting_to_database():
         port='5432',
         database='server_database',
         user='postgres',
-        password='miu'
+        password='miumiau'
     )
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -180,8 +180,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             # Список доступных серверов
             servers = [
                 {'host': '127.0.0.1', 'port': 8081},
-                {'host': '127.0.0.1', 'port': 8082},
-                {'host': '127.0.0.1', 'port': 8083},
+                # {'host': '127.0.0.1', 'port': 8082},
+                # {'host': '127.0.0.1', 'port': 8083},
             ]
         
             # Выбор сервера для нового пользователя
