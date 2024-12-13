@@ -1,11 +1,3 @@
-#include "mainwindow.h"
-#include "loginwindow.h"
-#include "global.h"
-#include "registrationwindow.h"
-#include "projectwindow.h"
-#include "task.h"
-#include "taskwindow.h"
-#include "global.h"
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -25,6 +17,14 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
+#include "mainwindow.h"
+#include "loginwindow.h"
+#include "global.h"
+#include "registrationwindow.h"
+#include "projectwindow.h"
+#include "task.h"
+#include "taskwindow.h"
+#include "global.h"
 
 bool isLoggedIn = false;
 QString user_login_global="NULL";
@@ -228,7 +228,6 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), scrollArea(new QScrol
     setLayout(mainLayout); // Устанавливаем главный слой для окна
 }
 
-
 // Слот для создания новой задачи
 void MainWindow::createNewTask() {
     if (isLoggedIn == true) {
@@ -274,14 +273,14 @@ void MainWindow::on_authLoginButton_clicked()
         updateUserName(user_login_global); // Обновляем имя пользователя
         updateAuthButtons();
         updateUsersOnline();
-        Load_list_of_tasks();
+        updateListOfTask();
     }
 
 }
 
 void MainWindow::on_refreshButton_clicked(){
     updateUsersOnline();
-    Load_list_of_tasks();
+    updateListOfTask();
 }
 
 bool MainWindow::isServerAvailable(const QString &serverUrl) {
@@ -349,14 +348,26 @@ void MainWindow::updateUsersOnline() {
     });
 }
 
-void MainWindow::Load_list_of_tasks()
+void MainWindow::deleteTasks() {
+    QLayoutItem *item;
+    while ((item = tasksLayout->takeAt(0)) != nullptr) {
+        if (QWidget *widget = item->widget()) {
+            Task *task = qobject_cast<Task*>(widget);
+            if (task) {
+                task->deleteLater();
+            } else {
+                delete widget;
+            }
+        } else {
+            delete item->layout();
+        }
+    }
+}
+
+void MainWindow::updateListOfTask()
 {
     if (isLoggedIn) {
-        QList<Task*> taskWidgets = tasksLayout->findChildren<Task*>();
-        for (Task* task : taskWidgets) {
-            tasksLayout->removeWidget(task); // Удаляем виджет из макета
-            task->deleteLater(); // Удаляем объект Task
-        }
+         deleteTasks();
 
         QNetworkAccessManager *manager = new QNetworkAccessManager(this);
         QUrl url(smallServerUrl); // Замените на ваш URL
@@ -456,6 +467,7 @@ void MainWindow::on_logoutButton_clicked()
     updateUserName(user_login_global);
     updateAuthButtons();
     updateUsersOnline();
+    deleteTasks();
 }
 
 // Меняем кнопки "Войти" и "Зарегистрироваться" на "Выйти" и наоборот
