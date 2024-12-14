@@ -133,7 +133,7 @@ void Project::markAsDone() {
 
     // Создаем QNetworkAccessManager для отправки запроса
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url(smallServerUrl); // Замените на ваш URL
+    QUrl url("http://localhost:8083"); // Замените на ваш URL
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -193,7 +193,7 @@ void Project::openProject() {
     projectWindow->show();
 }
 
-void Project::saveProject() {
+/* void Project::saveProject() {
     QString temp = extractSubTasksInfo();
     // Проверка на пустые поля
     if (titleEdit->text().isEmpty() || descriptionEdit->toPlainText().isEmpty()) {
@@ -230,7 +230,7 @@ void Project::saveProject() {
             // Проверяем сообщение от сервера
             QString message = jsonObject["message"].toString();
             QString project_id_temp = jsonObject["project_id"].toString();
-            QMessageBox::information(this, "Проект сохранен", project_id_temp);
+            QMessageBox::information(this, "Проект сохранен", message);
             if (message == "Project creation successful!") {
                 project_id=project_id_temp;
                 QMessageBox::information(this, "Проект сохранен", message);
@@ -248,6 +248,64 @@ void Project::saveProject() {
         QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
     });
 }
+*/
+
+    void Project::saveProject() {
+        QString temp = extractSubTasksInfo();
+        // Проверка на пустые поля
+        if (titleEdit->text().isEmpty() || descriptionEdit->toPlainText().isEmpty()) {
+            QMessageBox::warning(this, "Ошибка", "Название и описание не могут быть пустыми");
+            return;
+        }
+
+        QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+        QUrl url("http://localhost:8083"); // Замените на ваш URL
+        QNetworkRequest request(url);
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+        // Создаем JSON объект с данными для авторизации
+        QJsonObject json;
+        json["action"] = "save_project";
+        json["login"] = user_login_global;
+        json["project_name"] = titleEdit->text(); // Указываем название задачи
+        json["project_text"] = descriptionEdit->toPlainText(); // Указываем название задачи
+        json["subtasks"] = temp; // Указываем название задачи
+
+        // Преобразуем JSON объект в документ и выводим его в консоль для отладки
+        QJsonDocument jsonDoc(json);
+
+        // Отправляем POST запрос
+        QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+
+        // Обрабатываем ответ
+        connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+            if (reply->error() == QNetworkReply::NoError) {
+                QString response = QString::fromUtf8(reply->readAll()).trimmed();
+                QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+                QJsonObject jsonObject = jsonResponse.object();
+
+                // Проверяем сообщение от сервера
+                QString message = jsonObject["message"].toString();
+                QString project_id_temp = jsonObject["project_id"].toString();
+                QMessageBox::information(this, "Проект сохранен", project_id_temp);
+                if (message == "Project creation successful!") {
+                    project_id=project_id_temp; // Отправляем сигнал с project_id
+                    QMessageBox::information(this, "Проект сохранен", message);
+                } else {
+                    QMessageBox::warning(this, "Ошибка при сохранении проекта", message);
+                }
+            } else {
+                QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
+            }
+            reply->deleteLater(); // Освобождаем память
+        });
+
+        // Обрабатываем ошибки сети
+        connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
+            QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
+        });
+    }
+
 
 void Project::addSubTask() {
     // Создаём горизонтальный слой для подзадачи
@@ -299,7 +357,56 @@ void Project::addSubTask() {
     connect(subTaskWeight, &QLineEdit::textChanged, this, &Project::textChanged);
 
     // Подключаем сигнал кнопки "Пригласить" к слоту
-    connect(inviteButton, &QPushButton::clicked, this, &Project::on_invite_clicked);
+    // Подключаем сигнал кнопки "Пригласить" к слоту
+       connect(inviteButton, &QPushButton::clicked, [this, newSubTask, invitedUserLabel,assignedUser,subTaskWeight](){
+       QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+       QUrl url("http://localhost:8083"); // Замените на ваш URL
+       QNetworkRequest request(url);
+       request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+       // Создаем JSON объект с данными для авторизации
+       QJsonObject json;
+       json["action"] = "send_invitation";
+       json["target_login"] = assignedUser->text();
+       json["project_text"] = descriptionEdit->toPlainText();
+       json["project_name"] = titleEdit->text();
+       json["subtask_text"] = newSubTask->text();
+       json["subtask_weight"] = subTaskWeight->text();
+       json["project_id"] = project_id;
+       json["login"] = user_login_global;
+
+
+       // Преобразуем JSON объект в документ и выводим его в консоль для отладки
+       QJsonDocument jsonDoc(json);
+
+       // Отправляем POST запрос
+       QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+
+       // Обрабатываем ответ
+       connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+           if (reply->error() == QNetworkReply::NoError) {
+               QString response = QString::fromUtf8(reply->readAll()).trimmed();
+               QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+               QJsonObject jsonObject = jsonResponse.object();
+
+               // Проверяем сообщение от сервера
+               QString message = jsonObject["message"].toString();
+               if (message == "Subtask") {
+                   QMessageBox::information(this, "Задача сохранена", "Задача успешно сохранена");
+               } else {
+                   QMessageBox::warning(this, "Ошибка при сохранении задачи", "Задача не сохранена");
+               }
+           } else {
+               QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
+           }
+           reply->deleteLater(); // Освобождаем память
+       });
+
+       // Обрабатываем ошибки сети
+       connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
+           QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
+       });
+       });
 }
 
 void Project::invite_user(const QString &invited_user_login){
@@ -358,7 +465,7 @@ void Project::setDescription(const QString& description) {
     descriptionEdit->setText(description);
 }
 
-void Project::addSubTaskFromServer(int subtask_id, const QString& subtask_text, int subtask_weight, const QString& status, int number) {
+void Project::addSubTaskFromServer(int subtask_id, const QString& subtask_text, int subtask_weight, const QString& status, int number, QString username_local) {
     QHBoxLayout *subTaskLayout = new QHBoxLayout();
 
     // Поле для названия подзадачи
@@ -366,6 +473,12 @@ void Project::addSubTaskFromServer(int subtask_id, const QString& subtask_text, 
     newSubTask->setText(subtask_text);
     newSubTask->setFixedHeight(22);
     newSubTask->setStyleSheet("background-color: #e1f0db; color: black; font-size: 14px; outline: none; border: none;");
+
+    QLineEdit *assignedUsr = new QLineEdit(this);
+    assignedUsr->setText(username_local);
+    assignedUsr->setFixedHeight(22);
+    assignedUsr->setStyleSheet("background-color: #e1f0db; color: black; font-size: 14px; outline: none; border: none;");
+
 
     // Поле для веса подзадачи
     QLineEdit *subTaskWeight = new QLineEdit(this);
@@ -375,6 +488,10 @@ void Project::addSubTaskFromServer(int subtask_id, const QString& subtask_text, 
     subTaskWeight->setAlignment(Qt::AlignCenter);
     subTaskWeight->setStyleSheet("background-color: #e1f0db; color: black; font-size: 10px; outline: none; border: none;");
 
+    QPushButton *inviteButton = new QPushButton("Пригласить", this);
+       inviteButton->setStyleSheet("background-color: #3b4f2a; color: white; font-size: 12px; outline: none; border: none; border-radius: 5px; padding: 3px 8px;");
+       inviteButton->setFixedHeight(22);
+
     // Поле для статуса подзадачи
     QLabel *statusLabel = new QLabel(status, this);
     statusLabel->setStyleSheet("color: black; font-size: 12px;");
@@ -383,9 +500,60 @@ void Project::addSubTaskFromServer(int subtask_id, const QString& subtask_text, 
     subTaskLayout->addWidget(newSubTask);
     subTaskLayout->addWidget(subTaskWeight);
     subTaskLayout->addWidget(statusLabel);
+    subTaskLayout->addWidget(inviteButton);
+    subTaskLayout->addWidget(assignedUsr);
 
     // Добавляем подзадачу в контейнер
     subTasksLayout->addLayout(subTaskLayout);
+    connect(inviteButton, &QPushButton::clicked, [this, newSubTask, subTaskWeight,assignedUsr](){
+            QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+            QUrl url("http://localhost:8083"); // Замените на ваш URL
+            QNetworkRequest request(url);
+            request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+            QMessageBox::information(this, "Задача сохранена", "Задача успешно сохранена");
+            // Создаем JSON объект с данными для авторизации
+            QJsonObject json;
+            json["action"] = "send_invitation";
+            json["target_login"] = assignedUser->text();
+            json["project_text"] = descriptionEdit->toPlainText();
+            json["project_name"] = titleEdit->text();
+            json["subtask_text"] = newSubTask->text();
+            json["subtask_weight"] = subTaskWeight->text();
+            json["project_id"] = project_id;
+            json["login"] = assignedUsr->text();
+
+            QMessageBox::information(this, "Задача сохранена", "Задача успешно сохранена");
+            // Преобразуем JSON объект в документ и выводим его в консоль для отладки
+            QJsonDocument jsonDoc(json);
+
+            // Отправляем POST запрос
+            QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+
+            // Обрабатываем ответ
+            connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+                if (reply->error() == QNetworkReply::NoError) {
+                    QString response = QString::fromUtf8(reply->readAll()).trimmed();
+                    QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+                    QJsonObject jsonObject = jsonResponse.object();
+
+                    // Проверяем сообщение от сервера
+                    QString message = jsonObject["message"].toString();
+                    if (message == "Subtask") {
+                        QMessageBox::information(this, "Задача сохранена", "Задача успешно сохранена");
+                    } else {
+                        QMessageBox::warning(this, "Ошибка при сохранении задачи", "Задача не сохранена");
+                    }
+                } else {
+                    QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
+                }
+                reply->deleteLater(); // Освобождаем память
+            });
+
+            // Обрабатываем ошибки сети
+            connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
+                QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
+            });
+        });
 }
 
 void Project::textChanged() {

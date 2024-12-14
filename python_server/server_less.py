@@ -74,8 +74,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             response = self.task_destruction(task_id)
         elif action == 'save_project':
             response = self.project_creation(project_name, project_text, login, subtasks_str)
-        elif action == 'project_destruction':
-            response = self.project_destruction(project_name, project_text, login)
+        elif action == 'delete_project':
+            response = self.delete_project(project_id)
         elif action == 'list_of_tasks':
             response = self.get_info(login)
         elif action == 'send_invitation':
@@ -208,11 +208,14 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 logger.debug(f"Subtask '{subtask_text}' added with ID {subtask_id} and number {subtask_number - 1}")
 
             logger.debug("Project creation successful")
+            print(project_id)
+            project_id = str(project_id)
+            print(project_id)
 
             return {
                 'message': 'Project creation successful!',
-                'project_name': project_name,
                 'project_id': project_id,
+                'project_name': project_name,
                 'subtask_ids': subtask_ids
             }
 
@@ -441,7 +444,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
-        
             # определяем тип проекта для выбора сценария удаления
             cursor.execute("SELECT foreign_id, real_owner, type FROM projects WHERE project_id = %s", (project_id,))
             project_info = cursor.fetchone()
@@ -457,7 +459,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 if not original_server_url:
                     return {'error': 'Сервер оригинального проекта не найден'}
                 
-                cursor.execute("SELECT subtask_name FROM subtasks WHERE project_id = %s", (project_id,))
+                cursor.execute("SELECT subtask_name FROM subtasks WHERE project = %s", (project_id,))
                 subtask_name = cursor.fetchone()[0]
                 update_data = {
                     "action": "subtask_status_update",
@@ -475,12 +477,14 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 return {'message': 'Копия проекта выполнена и удалена'}
             else: # если не копия то есть main
                 # проверка что ВСЕ подзадачи выполнены (может быть accepted declined)
-                cursor.execute("SELECT COUNT(*) FROM subtasks WHERE project_id = %s AND status != 'completed'", (project_id,))
+                cursor.execute("SELECT COUNT(*) FROM subtasks WHERE project = %s AND status != 'completed'", (project_id,))
                 incomplete_subtasks = cursor.fetchone()[0]
                 if incomplete_subtasks > 0:
                     return {'error': 'Не все подзадачи выполнены'}
             
                 # удаляем
+            cursor.execute("DELETE FROM subtasks WHERE project = %s", (project_id,))
+            connect.commit()
             cursor.execute("DELETE FROM projects WHERE project_id = %s", (project_id,))
             connect.commit()
             return {'message': 'Оригинальный проект полностью выполнен и успешно удален'}
@@ -612,7 +616,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             # Для каждого проекта получаем список подзадач
             for i in range(len(list_of_projects)):
                 project_id = list_of_projects[i][0]  # Получаем project_id текущего проекта
-                cursor.execute("SELECT subtask_id, subtask_text, subtask_weight, status, number FROM subtasks WHERE project = %s", (project_id,))
+                cursor.execute("SELECT owner, subtask_id, subtask_text, subtask_weight, status, number FROM subtasks WHERE project = %s", (project_id,))
                 subtasks = cursor.fetchall() 
                 list_of_projects[i] = list_of_projects[i] + (subtasks,)  # Добавляем подзадачи к проекту
 

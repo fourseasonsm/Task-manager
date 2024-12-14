@@ -500,19 +500,21 @@ void MainWindow::Load_list_of_tasks() {
                             Project *newProject = new Project(this);
                             newProject->setTitle(projectName); // Устанавливаем название проекта
                             newProject->setDescription(projectText); // Устанавливаем описание проекта
+                            newProject->project_id=project_id;
 
                             // Добавляем подзадачи
                             for (const QJsonValue& subtaskValue : subtasksArray) {
                                 QJsonArray subtaskData = subtaskValue.toArray();
-                                if (subtaskData.size() == 5) {
-                                    int subtask_id = subtaskData[0].toInt(); // Идентификатор подзадачи
-                                    QString subtask_text = subtaskData[1].toString(); // Текст подзадачи
-                                    int subtask_weight = subtaskData[2].toInt(); // Вес подзадачи
-                                    QString status = subtaskData[3].toString(); // Статус подзадачи
-                                    int number = subtaskData[4].toInt(); // Порядковый номер подзадачи
+                                if (subtaskData.size() == 6) {
+                                    QString username_local = subtaskData[0].toString(); // Текст подзадачи
+                                    int subtask_id = subtaskData[1].toInt(); // Идентификатор подзадачи
+                                    QString subtask_text = subtaskData[2].toString(); // Текст подзадачи
+                                    int subtask_weight = subtaskData[3].toInt(); // Вес подзадачи
+                                    QString status = subtaskData[4].toString(); // Статус подзадачи
+                                    int number = subtaskData[5].toInt(); // Порядковый номер подзадачи
 
                                     // Добавляем подзадачу в проект
-                                    newProject->addSubTaskFromServer(subtask_id, subtask_text, subtask_weight, status, number);
+                                    newProject->addSubTaskFromServer(subtask_id, subtask_text, subtask_weight, status, number,username_local);
                                 } else {
                                     qWarning() << "Invalid subtask format:" << subtaskData;
                                 }

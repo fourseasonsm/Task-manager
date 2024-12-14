@@ -16,13 +16,14 @@
 public:
     Project(QWidget *parent = nullptr);
     QString invited_login_temp = "k";
+    QString project_id; // Член класса для хранения id таска
 
 public slots:
     void addSubTask(); // Слот для создания новой задачи
     void invite_user(const QString &invited_user_login); // Слот для приглашения юзера
     void setTitle(const QString& title);
     void setDescription(const QString& description);
-    void addSubTaskFromServer(int subtask_id, const QString& subtask_text, int subtask_weight, const QString& status, int number);
+    void addSubTaskFromServer(int subtask_id, const QString& subtask_text, int subtask_weight, const QString& status, int number,QString username_local);
 
 private slots:
     QString extractSubTasksInfo();
@@ -32,6 +33,9 @@ private slots:
     void textChanged(); // Слот для изменения цвета веса подзадачи
     void saveProject(); // Слот для сохранения задачи
 
+    // Сигнал для передачи project_id
+signals:
+    void projectSaved(const QString &project_id);
 
 private:
 
@@ -45,7 +49,6 @@ private:
     QPushButton *closeButton; // Кнопка для закрытия проекта
     QLineEdit *assignedUser;
     QString smallServerUrl; // Член класса для хранения smallServerUrl
-    QString project_id; // Член класса для хранения id таска
     QPushButton *subTaskButton; // Кнопка для добавления подзадачи
     QVBoxLayout *subTasksLayout; // Компоновка в виджете проекта
     QLineEdit subTaskWeight;
