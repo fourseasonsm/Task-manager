@@ -72,6 +72,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             data = json.loads(post_data)
             action = data.get('action')
             login = data.get('login')
+            target_login = data.get('target_login')
             password = data.get('password')
             email = data.get('email')
             # server_url = data.get ('server_url')
@@ -95,7 +96,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         elif action == 'list_of_users':
             response = self.online_users()
         elif action == 'user_info':
-            response = self.user_info(login)
+            response = self.user_info(target_login)
         else:
             response = {
                 'message': 'Invalid action.'
@@ -128,29 +129,41 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
 
-    def user_info (self, login):
+    def user_info(self, target_login):
         connect = None
         cursor = None
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
-            cursor.execute("SELECT isonline FROM users WHERE login = %s", (login,))
+
+            # Проверяем, существует ли пользователь
+            cursor.execute("SELECT isonline FROM users WHERE login = %s", (target_login,))
             status_list = cursor.fetchall()
+
+            if not status_list:
+                return {'message': 'Пользователь не найден'}
+
             user_status = status_list[0][0]
-            if (user_status == 'f'):
-                return {
-                    'message': 'User is offline'
-                }
+
+            if user_status == 'f':
+                return {'message': 'User is offline'}
             else:
-                cursor.execute("SELECT server_url FROM users WHERE login = %s", (login,))
-                user_info_list = cursor.fetchall()  
+                # Получаем URL сервера пользователя
+                cursor.execute("SELECT server_url FROM users WHERE login = %s", (target_login,))
+                user_info_list = cursor.fetchall()
+
+                if not user_info_list:
+                    return {'message': 'URL сервера пользователя не найден'}
+                logger.debug("гол")
                 return {
                     'message': 'User info sended',
-                    'list_of_users': user_info_list,
-                }
+                    'list_of_users': [{'server_url': url[0]} for url in user_info_list]
+                    }
+
+
         except Exception as e:
             if connect:
-                connect.rollback()  
+                connect.rollback()
             logger.error(f"Возникла ошибка связанная с базой данных: {e}")
             return {'message': 'Ошибка транзакции'}
         finally:

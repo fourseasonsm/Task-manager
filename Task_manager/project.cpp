@@ -510,19 +510,17 @@ void Project::addSubTaskFromServer(int subtask_id, const QString& subtask_text, 
             QUrl url("http://localhost:8083"); // Замените на ваш URL
             QNetworkRequest request(url);
             request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-            QMessageBox::information(this, "Задача сохранена", "Задача успешно сохранена");
             // Создаем JSON объект с данными для авторизации
             QJsonObject json;
             json["action"] = "send_invitation";
-            json["target_login"] = assignedUser->text();
+            json["target_login"] = assignedUsr->text();
             json["project_text"] = descriptionEdit->toPlainText();
             json["project_name"] = titleEdit->text();
             json["subtask_text"] = newSubTask->text();
             json["subtask_weight"] = subTaskWeight->text();
             json["project_id"] = project_id;
-            json["login"] = assignedUsr->text();
+            json["login"] = user_login_global;
 
-            QMessageBox::information(this, "Задача сохранена", "Задача успешно сохранена");
             // Преобразуем JSON объект в документ и выводим его в консоль для отладки
             QJsonDocument jsonDoc(json);
 
@@ -538,7 +536,7 @@ void Project::addSubTaskFromServer(int subtask_id, const QString& subtask_text, 
 
                     // Проверяем сообщение от сервера
                     QString message = jsonObject["message"].toString();
-                    if (message == "Subtask") {
+                    if (message == "Подзадача успешно отправлена") {
                         QMessageBox::information(this, "Задача сохранена", "Задача успешно сохранена");
                     } else {
                         QMessageBox::warning(this, "Ошибка при сохранении задачи", "Задача не сохранена");

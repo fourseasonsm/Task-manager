@@ -525,7 +525,78 @@ void MainWindow::Load_list_of_tasks() {
                             qWarning() << "Invalid project format:" << projectArray;
                         }
                     }
+//                    QJsonArray listOfinvites = jsonObject["list_of_invitations"].toArray();
 
+//                    for (const QJsonValue& projectValue : listOfinvites) {
+//                        // Каждый элемент массива — это массив из четырех элементов
+//                        QJsonArray invitesArray = projectValue.toArray();
+//                        if (invitesArray.size() == 8) {
+//                            int invintation_id = invitesArray[0].toInt(); // Идентификатор проекта
+//                            QString projectName_ivites = invitesArray[1].toString(); // Имя проекта
+//                            QString projectText_invites = invitesArray[2].toString(); // Текст проекта
+//                            int foreign_id = invitesArray[3].toInt(); // Идентификатор проекта
+//                            QString subtask_text = invitesArray[4].toString(); // Текст проекта
+//                            QString subtask_weight= invitesArray[5].toString(); // Текст проекта
+//                            QString ovner_login= invitesArray[6].toString(); // Текст проекта
+//                            QJsonArray subtasksArray = invitesArray[7].toArray(); // Список подзадач
+//                            int subtask_id = invitesArray[8].toInt(); // Идентификатор проекта
+
+//                            // Создаем объект Project
+//                            QMessageBox msg = QMessageBox();
+//                            msg.setIcon(QMessageBox::Information);
+//                            msg.setWindowTitle("Приглашение");
+//                            msg.setInformativeText( projectName_ivites + "\n" + projectText_invites  + "\n"+ subtask_text + "\n"+ subtask_weight + "\n" +ovner_login);
+//                            msg.addButton("Принять",QMessageBox::AcceptRole);
+//                            msg.addButton("Отклонить",QMessageBox::RejectRole);
+//                            bool bttt = msg.exec();
+//                            if (bttt) {
+//                                QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+//                                QUrl url("http://localhost:8083"); // Замените на ваш URL
+//                                QNetworkRequest request(url);
+//                                request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+//                                // Создаем JSON объект с данными для авторизации
+//                                QJsonObject json;
+//                                json["action"] = "send_anwser";
+//                                json["anwser"] = "yes";
+
+//                                // Преобразуем JSON объект в документ и выводим его в консоль для отладки
+//                                QJsonDocument jsonDoc(json);
+
+//                                // Отправляем POST запрос
+//                                QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+
+//                                // Обрабатываем ошибки сети
+//                                connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
+//                                    QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
+//                                });
+//                        }
+//                            else {
+//                                QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+//                                QUrl url("http://localhost:8083"); // Замените на ваш URL
+//                                QNetworkRequest request(url);
+//                                request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+//                                // Создаем JSON объект с данными для авторизации
+//                                QJsonObject json;
+//                                json["action"] = "send_anwser";
+//                                json["anwser"] = "no";
+
+//                                // Преобразуем JSON объект в документ и выводим его в консоль для отладки
+//                                QJsonDocument jsonDoc(json);
+
+//                                // Отправляем POST запрос
+//                                QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+
+//                                // Обрабатываем ошибки сети
+//                                connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
+//                                    QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
+//                                });
+//                            }
+//                        }
+//                                // Создаем объект Project
+
+//                    }
                     // Выводим сообщение в зависимости от наличия задач и проектов
                     if (listOfTasks.isEmpty() && listOfProjects.isEmpty()) {
                         QMessageBox::information(this, "Нет задач и проектов", "Вы еще не создали задач и проектов.");
