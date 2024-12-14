@@ -144,7 +144,7 @@ void Project::saveProject() {
     }
 
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url(smallServerUrl); // Замените на ваш URL
+    QUrl url("http://localhost:8083"); // Замените на ваш URL
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 

@@ -55,11 +55,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             project_text = data.get('project_text')
 
 
-            subtask_id = data.get('subtask_id')
-            subtask_status = data.get('subtask_status')
-            subtask_text = data.get('subtask_text')
-            subtask_weight = data.get('subtask_weight')
-            taker_login = data.get('taker_login')
+            subtasks_str = data.get("subtasks")
 
             user_id = data.get('user_id')
             login = data.get('login') 
@@ -77,7 +73,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         elif action == 'destruction':
             response = self.task_destruction(task_id)
         elif action == 'save_project':
-            response = self.project_creation(project_id, project_name, project_text, login)
+            response = self.project_creation(project_name, project_text, login, subtasks_str)
         elif action == 'project_destruction':
             response = self.project_destruction(project_name, project_text, login)
         elif action == 'list_of_tasks':
@@ -164,45 +160,52 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
 # П Р О Е К Т
 
-    def project_creation(self, project_name, project_text, login,
-                     subtask1_text, subtask1_weight,
-                     subtask2_text, subtask2_weight,
-                     subtask3_text, subtask3_weight): # при создании проекта все его подзадачи автоматически назначаются пользователю создателю и имеют статус выполнены
+    def project_creation(self, project_name, project_text, login, subtasks_str):
         connect = None
         cursor = None
         try:
-            connect = connecting_to_database()
+            connect = connecting_to_database()  # Инициализация подключения к базе данных
             cursor = connect.cursor()
 
             # Создаем проект
             cursor.execute(
-                "INSERT INTO project (project_name, project_text, owner, real_owner, type) VALUES (%s, %s, %s, %s, 'main') RETURNING project_id",
+                "INSERT INTO projects (project_name, project_text, owner, real_owner, type) VALUES (%s, %s, %s, %s, 'main') RETURNING project_id",
                 (project_name, project_text, login, login)
             )
             project_id = cursor.fetchone()[0]
-            cursor.execute("UPDATE project SET foreign_id = %s WHERE project_id = %s", (project_id, project_id))
+            cursor.execute("UPDATE projects SET foreign_id = %s WHERE project_id = %s", (project_id, project_id))
 
-            connect.commit() 
+            connect.commit()
             logger.debug(f"Проект '{project_name}' создан с ID {project_id} и foreign_id = {project_id}")
 
-            # Список подзадач
-            subtasks = [
-            (subtask1_text, subtask1_weight, 1),  # Номер подзадачи 1
-            (subtask2_text, subtask2_weight, 2),  # Номер подзадачи 2
-            (subtask3_text, subtask3_weight, 3)   # Номер подзадачи 3
-            ]
-
+            # Разбираем строку подзадач
             subtask_ids = []
+            subtask_number = 1
 
-            # Добавляем подзадачи
-            for subtask_text, subtask_weight, subtask_number in subtasks:
-                cursor.execute("INSERT INTO subtasks (project, subtask_text, owner, subtask_weight, status, number) VALUES (%s, %s, %s, %s, 'completed', %s) RETURNING subtask_id",
-                (project_id, subtask_text, login, subtask_weight, subtask_number)
+            for subtask in subtasks_str.split(";"):
+                if not subtask.strip():
+                    continue  # Пропускаем пустые подзадачи
+
+                subtask_parts = subtask.split(",")
+                if len(subtask_parts) != 4:
+                    return {'error': f'Некорректный формат подзадачи: {subtask}'}
+
+                subtask_text, subtask_weight, subtask_owner = subtask_parts[:3]
+                try:
+                    subtask_weight = int(subtask_weight)
+                except ValueError:
+                    return {'error': f'Некорректный вес подзадачи: {subtask_weight}'}
+
+            # Добавляем подзадачу в базу данных
+                cursor.execute(
+                    "INSERT INTO subtasks (project, subtask_text, owner, subtask_weight, status, number) VALUES (%s, %s, %s, %s, 'completed', %s) RETURNING subtask_id",
+                    (project_id, subtask_text, subtask_owner, subtask_weight, subtask_number)
                 )
                 subtask_id = cursor.fetchone()[0]
                 subtask_ids.append(subtask_id)
+                subtask_number += 1
                 connect.commit()
-                logger.debug(f"Subtask '{subtask_text}' added with ID {subtask_id} and number {subtask_number}")
+                logger.debug(f"Subtask '{subtask_text}' added with ID {subtask_id} and number {subtask_number - 1}")
 
             logger.debug("Project creation successful")
 
@@ -210,9 +213,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 'message': 'Project creation successful!',
                 'project_name': project_name,
                 'project_id': project_id,
-                'subtask1_id': subtask_ids[0],
-                'subtask2_id': subtask_ids[1],
-                'subtask3_id': subtask_ids[2]
+                'subtask_ids': subtask_ids
             }
 
         except Exception as e:
