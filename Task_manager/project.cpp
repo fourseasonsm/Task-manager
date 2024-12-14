@@ -120,13 +120,71 @@ Project::Project(QWidget *parent)
 
     connect(openButton, &QPushButton::clicked, this, &Project::openProject);
     connect(subTaskButton, &QPushButton::clicked, this, &Project::addSubTask);
-    connect(doneButton, &QPushButton::clicked, this, &Project::extractSubTasksInfo);
+    connect(doneButton, &QPushButton::clicked, this, &Project::markAsDone);
     connect(saveButton, &QPushButton::clicked, this, &Project::saveProject);
 }
 
 void Project::markAsDone() {
-    this->deleteLater(); // Удаляем задачу
+    // Проверка, что проект уже сохранен и имеет ID
+    if (project_id.isEmpty()) {
+        QMessageBox::warning(this, "Ошибка", "Проект еще не сохранен на сервере.");
+        return;
+    }
+
+    // Создаем QNetworkAccessManager для отправки запроса
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QUrl url(smallServerUrl); // Замените на ваш URL
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    // Создаем JSON объект с данными для удаления проекта
+    QJsonObject json;
+    json["action"] = "delete_project";
+    json["login"] = user_login_global; // Логин пользователя
+    json["project_id"] = project_id;  // ID проекта
+
+    // Преобразуем JSON объект в документ и выводим его в консоль для отладки
+    QJsonDocument jsonDoc(json);
+    qDebug() << jsonDoc;
+
+    // Отправляем POST запрос
+    QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+
+    // Обрабатываем ответ
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            QString response = QString::fromUtf8(reply->readAll()).trimmed();
+            QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+            QJsonObject jsonObject = jsonResponse.object();
+
+            // Проверяем сообщение от сервера
+            if (jsonObject.contains("message")) {
+                QString message = jsonObject["message"].toString();
+                if (message == "Копия проекта выполнена и удалена" || message == "Оригинальный проект полностью выполнен и успешно удален") {
+                    QMessageBox::information(this, "Проект завершен", message);
+                    this->deleteLater(); // Удаляем объект Project после успешного удаления проекта
+                } else {
+                    QMessageBox::warning(this, "Ошибка при завершении проекта", message);
+                }
+            } else if (jsonObject.contains("error")) {
+                QString errorMessage = jsonObject["error"].toString();
+                QMessageBox::warning(this, "Ошибка", "Ошибка сервера: " + errorMessage);
+            } else {
+                QMessageBox::warning(this, "Ошибка", "Неизвестный ответ от сервера");
+            }
+        } else {
+            QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
+        }
+        reply->deleteLater(); // Освобождаем память
+    });
+
+    // Обрабатываем ошибки сети
+    connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
+        QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
+        reply->deleteLater(); // Освобождаем память
+    });
 }
+
 void Project::openProject() {
 
     ProjectWindow *projectWindow = new ProjectWindow(this);
@@ -172,7 +230,8 @@ void Project::saveProject() {
             // Проверяем сообщение от сервера
             QString message = jsonObject["message"].toString();
             QString project_id_temp = jsonObject["project_id"].toString();
-            if (message == "project creation successful!") {
+            QMessageBox::information(this, "Проект сохранен", project_id_temp);
+            if (message == "Project creation successful!") {
                 project_id=project_id_temp;
                 QMessageBox::information(this, "Проект сохранен", message);
             } else {

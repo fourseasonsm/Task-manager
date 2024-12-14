@@ -179,6 +179,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             logger.debug(f"Проект '{project_name}' создан с ID {project_id} и foreign_id = {project_id}")
 
             # Разбираем строку подзадач
+            subtasks = []
             subtask_ids = []
             subtask_number = 1
 
@@ -196,9 +197,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 except ValueError:
                     return {'error': f'Некорректный вес подзадачи: {subtask_weight}'}
 
-            # Добавляем подзадачу в базу данных
-                cursor.execute(
-                    "INSERT INTO subtasks (project, subtask_text, owner, subtask_weight, status, number) VALUES (%s, %s, %s, %s, 'completed', %s) RETURNING subtask_id",
+                # Добавляем подзадачу в базу данных
+                cursor.execute("INSERT INTO subtasks (project, subtask_text, owner, subtask_weight, status, number) VALUES (%s, %s, %s, %s, 'completed', %s) RETURNING subtask_id",
                     (project_id, subtask_text, subtask_owner, subtask_weight, subtask_number)
                 )
                 subtask_id = cursor.fetchone()[0]
@@ -309,37 +309,105 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             response = requests.post(user_server_url, json=invitation_data)
             response.raise_for_status()
             logger.debug(f"Приглашение отправлено на сервер {user_server_url}")
-            return response.json()
+            return {
+                'message': 'Подзадача успешно отправлена'
+            }
         except requests.RequestException as e:
             logger.error(f"Ошибка при отправке приглашения: {e}")
             return {
                 'error': str(e)
             }
-
     
-    def handle_agreement(self, project_name, foreign_id, project_text, subtask_text, subtask_weight, owner_login, subtask_name, taker_login):
+    def handle_invitation(self, invitation_data):
         connect = None
         cursor = None
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
-        
-            # сохраняем принятый проект с типом копия
+
+            # Извлекаем данные из приглашения
+            action = invitation_data.get("action")
+            target_login = invitation_data.get("target_login")
+            project_name = invitation_data.get("project_name")
+            project_text = invitation_data.get("project_text")
+            foreign_id = invitation_data.get("foreign_id")
+            subtask_text = invitation_data.get("subtask_text")
+            subtask_weight = invitation_data.get("subtask_weight")
+            login = invitation_data.get("login")
+            subtask_id = invitation_data.get("subtask_id")
+
+            # Проверяем, что все необходимые данные переданы
+            if not all([action, target_login, project_name, project_text, foreign_id, subtask_text, subtask_weight, login, subtask_id]):
+                return {'error': 'Недостаточно данных для обработки приглашения'}
+
+            # Сохраняем приглашение в базе данных
+            cursor.execute(
+                "INSERT INTO invitations (target_login, project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                (target_login, project_name, project_text, foreign_id, subtask_text, subtask_weight, login, subtask_id)
+            )
+            connect.commit()
+
+            # Уведомляем пользователя о новом приглашении (например, через интерфейс)
+            self.notify_user(target_login, f"Вас пригласили в проект '{project_name}'") # НЕ РЕАЛИЗОВАНА
+
+            return {
+                'message': 'Приглашение успешно обработано и сохранено'
+            }
+
+        except Exception as e:
+            logger.error(f"Ошибка при обработке приглашения: {e}")
+            return {
+                'error': str(e)
+            }
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
+    
+    def handle_agreement(self, taker_login, project_id):
+        connect = None
+        cursor = None
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
+
+            # Извлекаем данные из таблицы invitations
+            cursor.execute("SELECT project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id FROM invitations WHERE project_id = %s",
+            (project_id,)
+            )
+            invitation_data = cursor.fetchone()
+            if not invitation_data:
+                return {'error': 'Приглашение не найдено'}
+
+            project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id = invitation_data
+
+            # Сохраняем принятый проект с типом копия
             cursor.execute("INSERT INTO projects (foreign_id, project_name, project_text, real_owner, owner, type) VALUES (%s, %s, %s, %s, %s, 'copy') RETURNING project_id",
-                       (foreign_id, project_name, project_text, owner_login, taker_login))
-            project_id = cursor.fetchone()[0]
+            (foreign_id, project_name, project_text, owner_login, taker_login)
+            )
+            new_project_id = cursor.fetchone()[0]
+
+            # Сохраняем подзадачу
             cursor.execute("INSERT INTO subtasks (project_id, subtask_text, subtask_weight, taken_by, status, subtask_name) VALUES (%s, %s, %s, %s, 'accepted', %s)",
-                       (project_id, subtask_text, subtask_weight, taker_login, subtask_name))
-        
+            (new_project_id, subtask_text, subtask_weight, taker_login, subtask_id)
+            )
+
+            # Удаляем приглашение из таблицы invitations
+            cursor.execute("DELETE FROM invitations WHERE project_id = %s AND owner = %s",
+            (project_id, taker_login)
+            )
+
             connect.commit()
             logger.debug(f"Проект {project_name} сохранен для пользователя {taker_login}")
-        
-            # отправка уведомления
-            self.notify_owner_server(owner_login, project_id, subtask_name, "accepted")
-        
+
+            # Отправляем уведомление владельцу проекта
+            self.notify_owner_server(owner_login, new_project_id, subtask_id, "accepted")
+
             return {
                 'message': 'Проект успешно сохранен'
             }
+
         except Exception as e:
             logger.error(f"Ошибка при обработке согласия пользователя: {e}")
             return {
