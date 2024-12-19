@@ -14,7 +14,7 @@
     Q_OBJECT
 
 public:
-    Project(QWidget *parent = nullptr);
+    Project(const QString &smallServerUrl, QWidget *parent = nullptr);
     QString invited_login_temp = "k";
     QString project_id; // Член класса для хранения id таска
 
