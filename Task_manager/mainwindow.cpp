@@ -246,7 +246,7 @@ void MainWindow::createNewTask() {
 // Слот для создания нового проекта
 void MainWindow::createNewProject() {
     if (isLoggedIn == true) {
-        Project *newProject = new Project(this);
+        Project *newProject = new Project(smallServerUrl, this);
 
         tasksLayout->addWidget(newProject);
 
@@ -304,7 +304,7 @@ QString MainWindow::selectAvailableServer(const QStringList &serverUrls) {
             return serverUrl;
         }
     }
-    QString url = "http://localhost:8080";
+    QString url = "http://185.255.132.137:80";
     return url; // Возвращаем пустую строку, если ни один сервер не доступен
 }
 
@@ -497,10 +497,10 @@ void MainWindow::Load_list_of_tasks() {
                             QJsonArray subtasksArray = projectArray[3].toArray(); // Список подзадач
 
                             // Создаем объект Project
-                            Project *newProject = new Project(this);
+                            Project *newProject = new Project(smallServerUrl,this);
                             newProject->setTitle(projectName); // Устанавливаем название проекта
                             newProject->setDescription(projectText); // Устанавливаем описание проекта
-                            newProject->project_id=project_id;
+                            newProject->project_id=QString::number(project_id);
 
                             // Добавляем подзадачи
                             for (const QJsonValue& subtaskValue : subtasksArray) {
