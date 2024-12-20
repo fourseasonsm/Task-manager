@@ -29,6 +29,7 @@ private slots:
     QString extractSubTasksInfo();
     void on_invite_clicked();
     void markAsDone(); // Слот для пометки задачи как выполненной
+    void close(); // Слот для пометки задачи как выполненной
     void openProject(); // Слот для открытия задачи в окне
     void textChanged(); // Слот для изменения цвета веса подзадачи
     void saveProject(); // Слот для сохранения задачи

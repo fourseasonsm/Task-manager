@@ -122,6 +122,7 @@ Project::Project(QWidget *parent)
     connect(subTaskButton, &QPushButton::clicked, this, &Project::addSubTask);
     connect(doneButton, &QPushButton::clicked, this, &Project::markAsDone);
     connect(saveButton, &QPushButton::clicked, this, &Project::saveProject);
+    connect(closeButton, &QPushButton::clicked, this, &Project::close);
 }
 
 void Project::markAsDone() {
@@ -528,6 +529,7 @@ void Project::addSubTaskFromServer(int subtask_id, const QString& subtask_text, 
             QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
 
             // Обрабатываем ответ
+            QMessageBox::information(this, "Задача сохранена", "Задача успешно сохранена");
             connect(reply, &QNetworkReply::finished, this, [this, reply]() {
                 if (reply->error() == QNetworkReply::NoError) {
                     QString response = QString::fromUtf8(reply->readAll()).trimmed();
@@ -593,4 +595,9 @@ void Project::textChanged() {
     } else {
         subTaskWeight->setStyleSheet("background-color: #e1f0db; color: black; font-size: 10px; outline: none; border: none;");  // Если введено неверное число, оставляем белый фон
     }
+}
+
+void Project::close() {
+
+   QWidget::close(); // Вызываем метод close базового класса
 }
