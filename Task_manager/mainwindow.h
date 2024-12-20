@@ -41,6 +41,8 @@ private:
     void updateListOfTask();
     void updateUsersOnline();
     void Load_list_of_tasks();
+    void Load_invitations();
+    void sendInvitationResponse(int invitation_id, const QString &response);
 
     QScrollArea *scrollArea; // Указатель на QScrollArea
     QVBoxLayout *tasksLayout; // Layout для хранения задач

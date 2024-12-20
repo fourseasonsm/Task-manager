@@ -134,7 +134,7 @@ void Project::markAsDone() {
 
     // Создаем QNetworkAccessManager для отправки запроса
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url("http://localhost:8083"); // Замените на ваш URL
+    QUrl url(URL); // Замените на ваш URL
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -203,7 +203,7 @@ void Project::openProject() {
     }
 
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url("http://localhost:8083"); // Замените на ваш URL
+    QUrl url(URL); // Замените на ваш URL
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -260,7 +260,7 @@ void Project::openProject() {
         }
 
         QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-        QUrl url("http://localhost:8083"); // Замените на ваш URL
+        QUrl url(URL); // Замените на ваш URL
         QNetworkRequest request(url);
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -361,7 +361,7 @@ void Project::addSubTask() {
     // Подключаем сигнал кнопки "Пригласить" к слоту
        connect(inviteButton, &QPushButton::clicked, [this, newSubTask, invitedUserLabel,assignedUser,subTaskWeight](){
        QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-       QUrl url("http://localhost:8083"); // Замените на ваш URL
+       QUrl url(URL); // Замените на ваш URL
        QNetworkRequest request(url);
        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -508,7 +508,7 @@ void Project::addSubTaskFromServer(int subtask_id, const QString& subtask_text, 
     subTasksLayout->addLayout(subTaskLayout);
     connect(inviteButton, &QPushButton::clicked, [this, newSubTask, subTaskWeight,assignedUsr](){
             QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-            QUrl url("http://localhost:8083"); // Замените на ваш URL
+            QUrl url(URL); // Замените на ваш URL
             QNetworkRequest request(url);
             request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
             // Создаем JSON объект с данными для авторизации

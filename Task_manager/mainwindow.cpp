@@ -282,6 +282,7 @@ void MainWindow::on_authLoginButton_clicked()
 void MainWindow::on_refreshButton_clicked(){
     updateUsersOnline();
     Load_list_of_tasks();
+    Load_invitations();
 }
 
 bool MainWindow::isServerAvailable(const QString &serverUrl) {
@@ -423,6 +424,142 @@ void MainWindow::updateUsersOnline() {
     }
 }
 */
+void MainWindow::Load_invitations() {
+    if (isLoggedIn) {
+        QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+        QUrl url(smallServerUrl);
+        QNetworkRequest request(url);
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+        QJsonObject json;
+        json["action"] = "list_of_invitations";
+        json["login"] = user_login_global;
+        QJsonDocument jsonDoc(json);
+
+        QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+
+        connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+            if (reply->error() == QNetworkReply::NoError) {
+                QString response = QString::fromUtf8(reply->readAll()).trimmed();
+                QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+                QJsonObject jsonObject = jsonResponse.object();
+
+                QString message = jsonObject["message"].toString();
+                if (message == "Invitations sended") {
+                    QJsonArray listOfInvitations = jsonObject["list_of_invitations"].toArray();
+
+                    // Проверяем, что массив приглашений не пустой
+                    if (!listOfInvitations.isEmpty()) {
+                        QDialog *invitationsDialog = new QDialog(this);
+                        invitationsDialog->setWindowTitle("Приглашения");
+                        invitationsDialog->setMinimumWidth(400);
+
+                        QVBoxLayout *dialogLayout = new QVBoxLayout(invitationsDialog);
+
+                        for (const QJsonValue& invitationValue : listOfInvitations) {
+                            QJsonObject invitationObject = invitationValue.toObject();
+                            int invitation_id = invitationObject["invitation_id"].toInt();
+                            QString projectName = invitationObject["project_name"].toString();
+                            QString projectText = invitationObject["project_text"].toString();
+                            int foreign_id = invitationObject["foreign_id"].toInt();
+                            QString subtask_text = invitationObject["subtask_text"].toString();
+                            QString subtask_weight = invitationObject["subtask_weight"].toString();
+                            QString owner_login = invitationObject["owner_login"].toString();
+                            int subtask_id = invitationObject["subtask_id"].toInt();
+
+                            // Создаем виджет для отображения приглашения
+                            QWidget *invitationWidget = new QWidget();
+                            QVBoxLayout *invitationLayout = new QVBoxLayout(invitationWidget);
+
+                            // Добавляем информацию о приглашении
+                            QLabel *infoLabel = new QLabel(
+                                QString("Проект: %1\nОписание: %2\nПодзадача: %3\nВес: %4\nОтправитель: %5")
+                                .arg(projectName)
+                                .arg(projectText)
+                                .arg(subtask_text)
+                                .arg(subtask_weight)
+                                .arg(owner_login)
+                            );
+                            invitationLayout->addWidget(infoLabel);
+
+                            // Добавляем кнопки "Принять" и "Отклонить"
+                            QHBoxLayout *buttonsLayout = new QHBoxLayout();
+                            QPushButton *acceptButton = new QPushButton("Принять");
+                            QPushButton *declineButton = new QPushButton("Отклонить");
+
+                            buttonsLayout->addWidget(acceptButton);
+                            buttonsLayout->addWidget(declineButton);
+                            invitationLayout->addLayout(buttonsLayout);
+
+                            // Обработчики кнопок
+                            connect(acceptButton, &QPushButton::clicked, this, [this, invitation_id]() {
+                                sendInvitationResponse(invitation_id, "accept");
+                            });
+
+                            connect(declineButton, &QPushButton::clicked, this, [this, invitation_id]() {
+                                sendInvitationResponse(invitation_id, "decline");
+                            });
+
+                            // Добавляем виджет приглашения в диалоговое окно
+                            dialogLayout->addWidget(invitationWidget);
+                        }
+
+                        // Показываем диалоговое окно
+                        invitationsDialog->setLayout(dialogLayout);
+                        invitationsDialog->exec();
+                    } else {
+                        QMessageBox::information(this, "Нет приглашений", "У вас нет новых приглашений.");
+                    }
+                } else {
+                    QMessageBox::warning(this, "Ошибка при получении приглашений", message);
+                }
+            } else {
+                QMessageBox::warning(this, "Ошибка", "Не удалось получить ответ от сервера: " + reply->errorString());
+            }
+            reply->deleteLater();
+        });
+
+        connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
+            QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
+        });
+    }
+}
+
+void MainWindow::sendInvitationResponse(int invitation_id, const QString &response) {
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QUrl url(smallServerUrl); // Замените на ваш URL
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    // Создаем JSON объект с данными для ответа
+    QJsonObject json;
+    json["action"] = response;
+    json["invitation_id"] = invitation_id;
+    QJsonDocument jsonDoc(json);
+
+    // Отправляем POST запрос
+    QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
+
+    // Обрабатываем ответ
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            QString response = QString::fromUtf8(reply->readAll()).trimmed();
+            QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+            QJsonObject jsonObject = jsonResponse.object();
+
+            QString message = jsonObject["message"].toString();
+            QMessageBox::information(this, "Ответ отправлен", message);
+        } else {
+            QMessageBox::warning(this, "Ошибка", "Не удалось отправить ответ: " + reply->errorString());
+        }
+        reply->deleteLater(); // Освобождаем память
+    });
+
+    // Обрабатываем ошибки сети
+    connect(reply, &QNetworkReply::errorOccurred, this, [this, reply]() {
+        QMessageBox::warning(this, "Ошибка", "Ошибка сети: " + reply->errorString());
+    });
+}
 
 void MainWindow::Load_list_of_tasks() {
     if (isLoggedIn) {
@@ -551,7 +688,7 @@ void MainWindow::Load_list_of_tasks() {
                             bool bttt = msg.exec();
                             if (bttt) {
                                 QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-                                QUrl url("http://localhost:8083"); // Замените на ваш URL
+                                QUrl url(URL); // Замените на ваш URL
                                 QNetworkRequest request(url);
                                 request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -573,7 +710,7 @@ void MainWindow::Load_list_of_tasks() {
                         }
                             else {
                                 QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-                                QUrl url("http://localhost:8083"); // Замените на ваш URL
+                                QUrl url(URL); // Замените на ваш URL
                                 QNetworkRequest request(url);
                                 request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
