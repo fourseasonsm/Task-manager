@@ -122,6 +122,7 @@ Project::Project(const QString &smallServerUrl, QWidget *parent)
     connect(subTaskButton, &QPushButton::clicked, this, &Project::addSubTask);
     connect(doneButton, &QPushButton::clicked, this, &Project::markAsDone);
     connect(saveButton, &QPushButton::clicked, this, &Project::saveProject);
+    connect(closeButton, &QPushButton::clicked, this, &Project::close);
 }
 
 void Project::markAsDone() {
@@ -133,7 +134,8 @@ void Project::markAsDone() {
 
     // Создаем QNetworkAccessManager для отправки запроса
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url(smallServerUrl); // Замените на ваш URL
+
+    QUrl url(URL); 
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -202,7 +204,7 @@ void Project::openProject() {
     }
 
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QUrl url("http://localhost:8083"); // Замените на ваш URL
+    QUrl url(URL); // Замените на ваш URL
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -259,7 +261,9 @@ void Project::openProject() {
         }
 
         QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-        QUrl url(smallServerUrl); // Замените на ваш URL
+
+        QUrl url(smallServerUrl);
+
         QNetworkRequest request(url);
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -360,7 +364,9 @@ void Project::addSubTask() {
     // Подключаем сигнал кнопки "Пригласить" к слоту
        connect(inviteButton, &QPushButton::clicked, [this, newSubTask, invitedUserLabel,assignedUser,subTaskWeight](){
        QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-       QUrl url(smallServerUrl); // Замените на ваш URL
+
+       QUrl url(smallServerUrl); 
+
        QNetworkRequest request(url);
        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -507,7 +513,9 @@ void Project::addSubTaskFromServer(int subtask_id, const QString& subtask_text, 
     subTasksLayout->addLayout(subTaskLayout);
     connect(inviteButton, &QPushButton::clicked, [this, newSubTask, subTaskWeight,assignedUsr](){
             QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-            QUrl url(smallServerUrl); // Замените на ваш URL
+
+            QUrl url(smallServerUrl); 
+
             QNetworkRequest request(url);
             request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
             // Создаем JSON объект с данными для авторизации
@@ -528,6 +536,7 @@ void Project::addSubTaskFromServer(int subtask_id, const QString& subtask_text, 
             QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
 
             // Обрабатываем ответ
+            QMessageBox::information(this, "Задача сохранена", "Задача успешно сохранена");
             connect(reply, &QNetworkReply::finished, this, [this, reply]() {
                 if (reply->error() == QNetworkReply::NoError) {
                     QString response = QString::fromUtf8(reply->readAll()).trimmed();
@@ -593,4 +602,9 @@ void Project::textChanged() {
     } else {
         subTaskWeight->setStyleSheet("background-color: #e1f0db; color: black; font-size: 10px; outline: none; border: none;");  // Если введено неверное число, оставляем белый фон
     }
+}
+
+void Project::close() {
+
+   QWidget::close(); // Вызываем метод close базового класса
 }

@@ -154,7 +154,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
                 if not user_info_list:
                     return {'message': 'URL сервера пользователя не найден'}
-                logger.debug("гол")
+                logger.debug(user_info_list)
                 return {
                     'message': 'User info sended',
                     'list_of_users': [{'server_url': url[0]} for url in user_info_list]

@@ -4,11 +4,11 @@ import psycopg2
 import logging
 import requests
 
-# структура кода
-# все о задачах
-# все о проектах
-# все о приглашениях
-# вспомогательные функции
+# Структура кода:
+# все о задачах (2)
+# все о проектах (2)
+# все о приглашениях (5)
+# вспомогательные функции (5)
 
 
 
@@ -25,7 +25,7 @@ def connecting_to_database():
     )
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
-    
+
     def do_POST(self):
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
@@ -42,65 +42,86 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         
         try:
             data = json.loads(post_data)
-
-            action = data.get('action')
-            
-            task_id = data.get('task_id')
-            task_name = data.get('task_name')
-            task_text = data.get('task_text')
-
-            project_id = data.get('project_id')
-            target_login = data.get('target_login')
-            project_name = data.get('project_name')
-            project_text = data.get('project_text')
-            subtask_text = data.get('subtask_text')
-            subtask_weight = data.get('subtask_weight')
-            taker_login = data.get('taker_login')
-
-
-            subtasks_str = data.get("subtasks")
-
-            user_id = data.get('user_id')
-            login = data.get('login') 
-            server_url = data.get('server_url')
-
         except json.JSONDecodeError:
             self.send_response(400) 
             self.wfile.write(json.dumps({'error': 'Invalid JSON'}).encode('utf-8'))
             return
 
+        action = data.get('action')
+    
+        task_id = data.get('task_id')
+        task_name = data.get('task_name')
+        task_text = data.get('task_text')
+
+        project_id = data.get('project_id')
+        target_login = data.get('target_login')
+        project_name = data.get('project_name')
+        project_text = data.get('project_text')
+
+        subtask_text = data.get('subtask_text')
+        subtask_id = data.get('subtask_id', '1')
+        subtask_weight = data.get('subtask_weight')
+        taker_login = data.get('taker_login')
+        updata = data.get('updata')   
+        invitation_data = data.get('invitation_data')
+        invitation_id = data.get('invitation_id')
+        subtasks_str = data.get("subtasks")
+
+
+        
+        user_id = data.get('user_id')
+        login = data.get('login') 
+        server_url = data.get('server_url')
+
         if action == 'creation':
             response = self.task_creation(task_name, task_text, login)
+            self.wfile.write(json.dumps(response).encode('utf-8'))
         elif action == 'register':
             response = self.handle_register(login, user_id, server_url)
+            self.wfile.write(json.dumps(response).encode('utf-8'))
         elif action == 'destruction':
             response = self.task_destruction(task_id)
+            self.wfile.write(json.dumps(response).encode('utf-8'))
         elif action == 'save_project':
             response = self.project_creation(project_name, project_text, login, subtasks_str)
+            self.wfile.write(json.dumps(response).encode('utf-8'))
         elif action == 'delete_project':
             response = self.delete_project(project_id)
+            self.wfile.write(json.dumps(response).encode('utf-8'))
         elif action == 'list_of_tasks':
             response = self.get_info(login)
+            self.wfile.write(json.dumps(response).encode('utf-8'))
+        elif action == 'list_of_invitations':
+            response = self.get_invitations(login)
+            self.wfile.write(json.dumps(response).encode('utf-8'))
         elif action == 'send_invitation':
-            response = self.send_invitation(project_name, project_text, project_id, target_login, subtask_text, subtask_weight, login)
-        elif action == 'agree':
-            response = self.handle_agreement(project_name, project_text, subtask_text, subtask_weight, login, taker_login)
+            response = self.send_invitation(subtask_id, project_name, project_text, project_id, target_login, subtask_text, subtask_weight, login)
+            self.wfile.write(json.dumps(response).encode('utf-8'))
+        elif action == 'invite_user':
+            invitation_data = data
+            response = self.handle_invitation(invitation_data)
+            self.wfile.write(json.dumps(response).encode('utf-8'))
+        elif action == 'accept':
+            response = self.handle_agreement(invitation_id)
+            self.wfile.write(json.dumps(response).encode('utf-8'))
         elif action == 'decline':
-            response = self.handle_user_decline(project_name, project_text, subtask_text, subtask_weight, login, subtask_id, taker_login)
-        elif action == 'subtask_status_update':
-            response = self.handle_subtask_status_update(project_id, subtask_id, subtask_status, taker_login, login)
-        elif action == 'notify_owner':
-            response = self.notify_owner_server(project_id, subtask_id, subtask_status)
+            response = self.handle_user_decline(invitation_id)
+            self.wfile.write(json.dumps(response).encode('utf-8'))
+        elif action == 'update_subtask_status':
+            updata = data
+            response = self.handle_subtask_status_update(updata)
+            self.wfile.write(json.dumps(response).encode('utf-8'))
         else:
             response = {
                 'message': 'Invalid action.'
             }
+            self.wfile.write(json.dumps(response).encode('utf-8'))
 
-        self.wfile.write(json.dumps(response).encode('utf-8'))
-
+            return
+        
 # З А Д А Ч И 
 
-    def task_creation(self, task_name, task_text, login): #РАБОТАЕТ
+    def task_creation(self, task_name, task_text, login): #сохранение задачи
         connect = None
         cursor = None
         try:
@@ -131,7 +152,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
 
-    def task_destruction(self, task_id): #РАБОТАЕТ
+    def task_destruction(self, task_id): #удаление задачи
         connect = None
         cursor = None
         try:
@@ -163,32 +184,30 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
 # П Р О Е К Т
 
-    def project_creation(self, project_name, project_text, login, subtasks_str):
+    def project_creation(self, project_name, project_text, login, subtasks_str): #создание проекта-оригинала запросом от пользователя (проект из приглашения создается сервером)
         connect = None
         cursor = None
         try:
-            connect = connecting_to_database()  # Инициализация подключения к базе данных
+            connect = connecting_to_database() 
             cursor = connect.cursor()
-
-            # Создаем проект
             cursor.execute(
                 "INSERT INTO projects (project_name, project_text, owner, real_owner, type) VALUES (%s, %s, %s, %s, 'main') RETURNING project_id",
-                (project_name, project_text, login, login)
+                (project_name, project_text, login, login) #настоящий владелец нужен для отправки приглашения, чтобы по этому логину мы могли отправить обновление информации по проекту
             )
             project_id = cursor.fetchone()[0]
-            cursor.execute("UPDATE projects SET foreign_id = %s WHERE project_id = %s", (project_id, project_id))
-
+            cursor.execute("UPDATE projects SET foreign_id = %s WHERE project_id = %s", (project_id, project_id)) #если проект был создан как оригинал а не как копия то 
+            #его внешний идентификатор и идентификатор на сервере совпадают
             connect.commit()
             logger.debug(f"Проект '{project_name}' создан с ID {project_id} и foreign_id = {project_id}")
 
-            # Разбираем строку подзадач
+            # разбираем строку подзадач
             subtasks = []
             subtask_ids = []
             subtask_number = 1
 
             for subtask in subtasks_str.split(";"):
                 if not subtask.strip():
-                    continue  # Пропускаем пустые подзадачи
+                    continue  # пропускаем пустые подзадачи
 
                 subtask_parts = subtask.split(",")
                 if len(subtask_parts) != 4:
@@ -200,7 +219,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 except ValueError:
                     return {'error': f'Некорректный вес подзадачи: {subtask_weight}'}
 
-                # Добавляем подзадачу в базу данных
+                # добавляем задачи в бд, идентификатор проекта - внешний ключ
                 cursor.execute("INSERT INTO subtasks (project, subtask_text, owner, subtask_weight, status, number) VALUES (%s, %s, %s, %s, 'completed', %s) RETURNING subtask_id",
                     (project_id, subtask_text, subtask_owner, subtask_weight, subtask_number)
                 )
@@ -221,7 +240,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 'project_name': project_name,
                 'subtask_ids': subtask_ids
             }
-
         except Exception as e:
             logger.error(f"Error during project creation: {e}")
             return {
@@ -233,284 +251,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
 
-    def project_destruction(self, project_id): # плохая функция, снести бы ее
-        connect = None
-        cursor = None
-        try:
-            connect = connecting_to_database()
-            cursor = connect.cursor()
 
-            cursor.execute("SELECT type, real_owner FROM projects WHERE project_id = %s", (project_id,))
-            project_info = cursor.fetchone()
-            if not project_info:
-                logger.warning(f"Проект с ID {project_id} не найден.")
-                return {
-                    'error': 'Проект не найден.'
-                }
-            project_type, real_owner = project_info
-
-            if project_type == 'copy':
-                # Отправляем уведомление оригинальному владельцу
-                self.notify_owner_server(real_owner, project_id, None, "deleted")
-                # Удаляем скопированный проект
-                cursor.execute("DELETE FROM projects WHERE project_id = %s", (project_id,))
-                connect.commit()
-                logger.debug(f"Копия проекта {project_id} успешно удалена.")
-                return {
-                    'message': 'Копия проекта успешно удалена.'
-                }
-            else:
-                # Проверяем, все ли подзадачи выполнены
-                cursor.execute("SELECT COUNT(*) FROM subtasks WHERE project_id = %s AND status != 'completed'", (project_id,))
-                incomplete_subtasks_count = cursor.fetchone()[0]
-
-                if incomplete_subtasks_count > 0:
-                    logger.warning(f"Проект {project_id} не может быть удален, так как не все подзадачи выполнены.")
-                    return {
-                        'error': 'Проект не может быть удален, так как не все подзадачи выполнены.'
-                    }
-                # Удаляем оригинальный проект
-                cursor.execute("DELETE FROM projects WHERE project_id = %s", (project_id,))
-                connect.commit()
-                logger.debug(f"Проект {project_id} успешно удален.")
-                return {
-                    'message': 'Проект успешно удален.'
-                }
-
-        except Exception as e:
-            logger.error(f"Ошибка при удалении проекта: {e}")
-            return {
-                'error': str(e)
-            }
-        finally:
-            if cursor:
-                cursor.close()
-            if connect:
-                connect.close()
-
-# П Р И Г Л А Ш Е Н И Е
-
-    def send_invitation(self, invitation_id, project_name, project_text, project_id, target_login, subtask_text, subtask_weight, login):
-        try:
-            #ищем куда отправлять с помощью запроса к большому серверу
-            user_server_url = self.get_user_server_url(target_login)
-            if not user_server_url:
-                return {
-                    'error': 'Сервер пользователя не найден'
-                }   
-            # данные о проекте и предложенной подзадаче
-            invitation_data = {
-                "action": "invite_user",
-                'invitation_id': invitation_id,
-                "target_login": target_login,  # логин пользователя, которому отправляется приглашение
-                "project_name": project_name,
-                "project_text": project_text,
-                'foreign_id': project_id,
-                "subtask_text": subtask_text,
-                "subtask_weight": subtask_weight,
-                "login": login,  # логин хозяина проекта
-            }
-
-            # отправляем приглашение по найденному адресу
-            response = requests.post(user_server_url, json=invitation_data)
-            response.raise_for_status()
-            logger.debug(f"Приглашение отправлено на сервер {user_server_url}")
-            return {
-                'message': 'Подзадача успешно отправлена'
-            }
-        except requests.RequestException as e:
-            logger.error(f"Ошибка при отправке приглашения: {e}")
-            return {
-                'error': str(e)
-            }
-    
-    def handle_invitation(self, invitation_data):
-        connect = None
-        cursor = None
-        try:
-            connect = connecting_to_database()
-            cursor = connect.cursor()
-
-            # Извлекаем данные из приглашения
-            action = invitation_data.get("action")
-            target_login = invitation_data.get("target_login")
-            project_name = invitation_data.get("project_name")
-            project_text = invitation_data.get("project_text")
-            foreign_id = invitation_data.get("foreign_id")
-            subtask_text = invitation_data.get("subtask_text")
-            subtask_weight = invitation_data.get("subtask_weight")
-            login = invitation_data.get("login")
-            subtask_id = invitation_data.get("subtask_id")
-
-            # Проверяем, что все необходимые данные переданы
-            if not all([action, target_login, project_name, project_text, foreign_id, subtask_text, subtask_weight, login, subtask_id]):
-                return {'error': 'Недостаточно данных для обработки приглашения'}
-
-            # Сохраняем приглашение в базе данных
-            cursor.execute(
-                "INSERT INTO invitations (target_login, project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                (target_login, project_name, project_text, foreign_id, subtask_text, subtask_weight, login, subtask_id)
-            )
-            connect.commit()
-
-            # Формируем данные для отправки клиенту
-            return {
-                "action": "new_invitation",
-                "target_login": target_login,
-                "project_name": project_name,
-                "project_text": project_text,
-                "foreign_id": foreign_id,
-                "subtask_text": subtask_text,
-                "subtask_weight": subtask_weight,
-                "owner_login": login,
-                "subtask_id": subtask_id
-            }
-        
-        except Exception as e:
-            logger.error(f"Ошибка при обработке приглашения: {e}")
-            return {
-                'error': str(e)
-            }
-        finally:
-            if cursor:
-                cursor.close()
-            if connect:
-                connect.close()
-                
-    def get_invitations(self, login):
-        connect = None
-        cursor = None
-        try:
-            connect = connecting_to_database()
-            cursor = connect.cursor()
-
-            # Получаем список приглашений для данного пользователя
-            cursor.execute("SELECT invitation_id, project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id FROM invitations WHERE target_login = %s", (login,))
-            invitations = cursor.fetchall()
-
-            # Преобразуем результат в список словарей для удобства использования
-            list_of_invitations = []
-            for invitation in invitations:
-                invitation_id, project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id = invitation
-                list_of_invitations.append({
-                    "invitation_id": invitation_id,
-                    "project_name": project_name,
-                    "project_text": project_text,
-                    "foreign_id": foreign_id,
-                    "subtask_text": subtask_text,
-                    "subtask_weight": subtask_weight,
-                    "owner_login": owner_login,
-                    "subtask_id": subtask_id
-                })
-
-            return {
-                'message': 'Список приглашений успешно получен',
-            '   list_of_invitations': list_of_invitations
-            }
-
-        except Exception as e:
-            logger.error(f"Ошибка при получении списка приглашений: {e}")
-            return {
-                'error': str(e)
-            }
-        finally:
-            if cursor:
-                cursor.close()
-            if connect:
-                connect.close()
-
-    def get_answer(self, answer, invitation_id):
-        if answer == 'yes':
-            self.handle_agreement(self, invitation_id)
-        else:
-            self.handle_user_decline
-    
-    def handle_agreement(self, invitation_id):
-        connect = None
-        cursor = None
-        try:
-            connect = connecting_to_database()
-            cursor = connect.cursor()
-
-            # Извлекаем данные из таблицы invitations
-            cursor.execute("SELECT project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id, target_login FROM invitations WHERE invitation_id = %s", (invitation_id,))
-            invitation_data = cursor.fetchone()
-            if not invitation_data:
-                return {'error': 'Приглашение не найдено'}
-
-            project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id, target_login = invitation_data
-
-            # Сохраняем принятый проект с типом копия
-            cursor.execute("INSERT INTO projects (foreign_id, project_name, project_text, real_owner, owner, type) VALUES (%s, %s, %s, %s, %s, 'copy') RETURNING project_id", (foreign_id, project_name, project_text, owner_login, target_login))
-            new_project_id = cursor.fetchone()[0]
-
-            # Сохраняем подзадачу
-            cursor.execute("INSERT INTO subtasks (project_id, subtask_text, subtask_weight, taken_by, status, subtask_name) VALUES (%s, %s, %s, %s, 'accepted', %s)", (new_project_id, subtask_text, subtask_weight, target_login, subtask_id))
-
-            # Удаляем приглашение из таблицы invitations
-            cursor.execute("DELETE FROM invitations WHERE invitation_id = %s", (invitation_id,))
-
-            connect.commit()
-            logger.debug(f"Проект {project_name} сохранен для пользователя {target_login}")
-
-            # Отправляем уведомление владельцу проекта
-            self.notify_owner_server(owner_login, new_project_id, subtask_id, "accepted")
-
-            return {
-                'message': 'Проект успешно сохранен'
-            }
-
-        except Exception as e:
-            logger.error(f"Ошибка при обработке согласия пользователя: {e}")
-            return {
-                'error': str(e)
-            }
-        finally:
-            if cursor:
-                cursor.close()
-            if connect:
-                connect.close()
-
-    def handle_user_decline(self, invitation_id):
-        connect = None
-        cursor = None
-        try:
-            connect = connecting_to_database()
-            cursor = connect.cursor()
-
-            # Извлекаем данные из таблицы invitations
-            cursor.execute("SELECT project_name, owner_login, subtask_id, target_login FROM invitations WHERE invitation_id = %s", (invitation_id,))
-            invitation_data = cursor.fetchone()
-            if not invitation_data:
-                return {'error': 'Приглашение не найдено'}
-
-            project_name, owner_login, subtask_id, target_login = invitation_data
-
-            # Удаляем приглашение из таблицы invitations
-            cursor.execute("DELETE FROM invitations WHERE invitation_id = %s", (invitation_id,))
-
-            connect.commit()
-            logger.debug(f"Пользователь {target_login} отказался от проекта {project_name}")
-
-            # Отправляем уведомление владельцу проекта
-            self.notify_owner_server(owner_login, None, subtask_id, "declined")
-
-            return {
-                'message': 'Отказ от проекта успешно обработан'
-            }
-
-        except Exception as e:
-            logger.error(f"Ошибка при обработке отказа пользователя: {e}")
-            return {
-                'error': str(e)
-            }
-        finally:
-            if cursor:
-                cursor.close()
-            if connect:
-                connect.close()
-
-    def delete_project(self, project_id): # я тут еще логин отправляла и извлекала хозяина проекта но как будто это не надо
+    def delete_project(self, project_id): # функция удаления проекта по запросу от пользователя, обрабатывает два сценария
         connect = None
         cursor = None
         try:
@@ -531,19 +273,14 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 if not original_server_url:
                     return {'error': 'Сервер оригинального проекта не найден'}
                 
-                cursor.execute("SELECT subtask_name FROM subtasks WHERE project = %s", (project_id,))
-                subtask_name = cursor.fetchone()[0]
-                update_data = {
-                    "action": "subtask_status_update",
-                    "foreign_id": foreign_id,
-                    "subtask_name": subtask_name,
-                    "status": "completed"
-                }
-                response = requests.post(original_server_url, json=update_data)
-                if response.status_code != 200:
-                    return {'error': 'Не удалось обновить статус оригинальной подзадачи'}
+                cursor.execute("SELECT subtask_text FROM subtasks WHERE project = %s", (project_id,))
+                subtask_text = cursor.fetchone()[0]
+
+                self.notify_owner_server(real_owner, foreign_id, subtask_text, "completed")
             
                 # удаляем копию
+                cursor.execute("DELETE FROM subtasks WHERE project = %s", (project_id,))
+                connect.commit()
                 cursor.execute("DELETE FROM projects WHERE project_id = %s", (project_id,))
                 connect.commit()
                 return {'message': 'Копия проекта выполнена и удалена'}
@@ -569,35 +306,240 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
 
+#П Р И Г Л А Ш Е Н И Я
 
-    def handle_subtask_status_update(self, project_id, subtask_id, status, taker_login, owner_login):
+    def handle_subtask_status_update(self, updata): #отвечает за обновление статуса подзадачи на сервере-хозяине, данные получает от notify_owner
         connect = None
         cursor = None
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
 
-            if status == "accepted":
-                # если подзадача принята обновляем ее статус
-                cursor.execute("UPDATE subtasks SET status = 'accepted', taker_login = %s WHERE project_id = %s AND subtask_id = %s", (taker_login, project_id, subtask_id))
-            elif status == "declined":
-                # если задачу не взяли то оставляем ее статус каким был, то есть взята тем кто создал проект
-                cursor.execute(
-                "UPDATE subtasks SET status = 'in_progress', taker_login = %s WHERE project_id = %s AND subtask_id = %s", (owner_login, project_id, subtask_id))
+            required_keys = ["project_id", "subtask_text", "status"]
+            for key in required_keys:
+                if key not in updata:
+                    return {'error': f'Missing key: {key}'} 
 
+            project_id = updata["project_id"]
+            subtask_text = updata["subtask_text"]
+            status = updata["status"]
+
+            #обновляем статус задачи в соответствии с присланным (completed/declined/accepted)
+            cursor.execute("UPDATE subtasks SET status = %s WHERE project = %s AND subtask_text = %s", (status, project_id, subtask_text))
             connect.commit()
-            logger.debug(f"Статус подзадачи {subtask_id} обновлен на '{status}'")
+            logger.debug(f"Subtask {subtask_text} in project {project_id} status updated to {status}")
+            return {
+                'message': 'Subtask status successfully updated',
+                'project_id': project_id,
+                'subtask_text': subtask_text,
+                'status': status
+            }
         except Exception as e:
-            logger.error(f"Ошибка при обработке уведомления: {e}")
+            logger.error(f"Error updating subtask status: {e}")
+            return {'error': str(e)}
         finally:
             if cursor:
                 cursor.close()
             if connect:
                 connect.close()
 
+    def send_invitation(self, subtask_id, project_name, project_text, project_id, target_login, subtask_text, subtask_weight, login): #отпрравка приглашения, вызывается данными отправленными от клиента
+        try:
+            user_server_url = self.get_user_server_url(target_login) #вспомогательная функция, делает запрос на распределяющий сервер, получает нужный url по логину
+            if not user_server_url:
+                return {'error': 'Сервер пользователя не найден'}
+            owner_server_url = self.get_user_server_url(login)
+
+            #ситуация когда пользователь получатель и хозяин находятся на одном сервере
+            if user_server_url == owner_server_url:
+                invitation_data = {
+                    "action": "invite_user",
+                    "target_login": target_login,
+                    "project_name": project_name,
+                    "project_text": project_text,
+                    "foreign_id": project_id,
+                    "subtask_text": subtask_text,
+                    "subtask_weight": subtask_weight,
+                    "subtask_id": subtask_id,
+                    "login": login,
+                }
+                response = self.handle_invitation(invitation_data)
+                return {'message': 'Подзадача успешно отправлена'}
+
+            # если не совпадают отправляем куда нибудь туда
+            invitation_data = {
+                "action": "invite_user",
+                "target_login": target_login,
+                "project_name": project_name,
+                "project_text": project_text,
+                "foreign_id": project_id,
+                "subtask_text": subtask_text,
+                "subtask_weight": subtask_weight,
+                "subtask_id": subtask_id,
+                "login": login,
+            }
+
+            logger.debug(f"Отправляем приглашение на сервер {user_server_url} с данными: {invitation_data}")
+
+            response = requests.post(user_server_url, json=invitation_data)
+            response.raise_for_status()
+
+            logger.debug(f"Ответ от сервера {user_server_url}: {response.status_code} {response.text}")
+
+            return {'message': 'Подзадача успешно отправлена'}
+
+        except requests.RequestException as e:
+            logger.error(f"Ошибка при отправке приглашения: {e}")
+            return {'error': str(e)}
+
+    def handle_invitation(self, invitation_data): #функция обработчик присланного приглашения, записывает его в специальную таблицу с приглашениями, откуда позже мы будем их вытаскивать
+        if not isinstance(invitation_data, dict):
+            return {'error': 'Invalid invitation data'} #получать мы должны обязательно словарь
+
+        logger.debug(f"Received invitation data: {invitation_data}")
+        connect = None
+        cursor = None
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
+            
+            required_keys = ["action", "target_login", "project_name", "project_text", 
+                            "foreign_id", "subtask_text", "subtask_weight", "login", "subtask_id"]
+            for key in required_keys:
+                if key not in invitation_data:
+                    return {'error': f'Missing key: {key}'}
+            
+            action = invitation_data.get("action")
+            target_login = invitation_data.get("target_login")
+            project_name = invitation_data.get("project_name")
+            project_text = invitation_data.get("project_text")
+            foreign_id = invitation_data.get("foreign_id")
+            subtask_text = invitation_data.get("subtask_text")
+            subtask_weight = invitation_data.get("subtask_weight")
+            login = invitation_data.get("login")
+            subtask_id = invitation_data.get("subtask_id")
+            
+            if not all([action, target_login, project_name, project_text, foreign_id, #возможно излишняя проверка
+                        subtask_text, subtask_weight, login, subtask_id]):
+                return {'error': 'Insufficient data to process invitation'}
+            
+            cursor.execute("INSERT INTO invitations (target_login, project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING invitation_id;", 
+                           (target_login, project_name, project_text, foreign_id, subtask_text, subtask_weight, login, subtask_id))
+            connect.commit() #вставляем все присланное в таблицу, возвращаем идентификатор приглашения (первичный ключ) чтобы дальше все действия производить по нему
+            invitation_id = cursor.fetchone()[0]
+            
+            logger.debug(f"Invitation saved to database with ID: {invitation_id}")
+            return {
+                "action": "new_invitation",
+                'invitation_id': invitation_id,
+                "target_login": target_login,
+                "project_name": project_name,
+                "project_text": project_text,
+                "foreign_id": foreign_id,
+                "subtask_text": subtask_text,
+                "subtask_weight": subtask_weight,
+                "owner_login": login,
+                "subtask_id": subtask_id
+            }
+        
+        except Exception as e:
+            logger.error(f"Error processing invitation: {e}")
+            return {'error': str(e)}
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
+
+    
+    def handle_agreement(self, invitation_id): #функция обработки согласия, вызывается отправкой данных от клиента
+        connect = None
+        cursor = None
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
+
+            #проверяем что такое приглашение действительно существует (на случай если что то сглючило, пользователь уже ответил на приглашение и оно удалилось из таблицы, а потом снова на него же отвечает)
+            cursor.execute("SELECT project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id, target_login FROM invitations WHERE invitation_id = %s", (invitation_id,))
+            invitation_data = cursor.fetchone()
+            if not invitation_data:
+                return {'error': 'Invitation not found'}
+
+            project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id, target_login = invitation_data
+
+            #при согласии подзадача формируется как проект с одной подзадачей, тип проекта указывается как копия, эта информация будет использована для определения сценария удаления
+            cursor.execute("INSERT INTO projects (foreign_id, project_name, project_text, real_owner, owner, type) VALUES (%s, %s, %s, %s, %s, 'copy') RETURNING project_id", (foreign_id, project_name, project_text, owner_login, target_login))
+            new_project_id = cursor.fetchone()[0]
+            cursor.execute("INSERT INTO subtasks (project, subtask_text, subtask_weight, owner, status, number) VALUES (%s, %s, %s, %s, 'accepted', %s)", (new_project_id, subtask_text, subtask_weight, target_login, subtask_id))
+
+            #удаляем ставшее не нужным приглашение
+            cursor.execute("DELETE FROM invitations WHERE invitation_id = %s", (invitation_id,))
+            connect.commit()
+            logger.debug(f"Project {project_name} saved for user {target_login}")
+
+            #уведомляем сервер хозяина проекта о смене статуса на accepted, у пользователя это отобразится при следующем обновлении
+            self.notify_owner_server(owner_login, foreign_id, subtask_text, "accepted")
+            return {
+                'message': 'Project successfully saved'
+            }
+        except Exception as e:
+            logger.error(f"Error processing user agreement: {e}")
+            return {
+                'error': str(e)
+            }
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
+
+    def handle_user_decline(self, invitation_id): #функция обработки отказа, вызывается отправкой данных от клиента
+        connect = None
+        cursor = None
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
+
+            cursor.execute("SELECT project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id, target_login FROM invitations WHERE invitation_id = %s", (invitation_id,))
+            invitation_data = cursor.fetchone()
+            if not invitation_data:
+                return {'error': 'Invitation not found'}
+
+            project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id, target_login = invitation_data
+
+            #удаляем не нужное приглашение
+            cursor.execute("DELETE FROM invitations WHERE invitation_id = %s", (invitation_id,))
+            connect.commit()
+            logger.debug(f"User {target_login} declined project {project_name}")
+
+            #делаем запрос на смену статуса отклоненной подзадачи
+            self.notify_owner_server(owner_login, foreign_id, subtask_text, "declined")
+            return {
+                'message': 'User decline processed successfully'
+            }
+
+        except Exception as e:
+            logger.error(f"Error processing user decline: {e}")
+            return {
+                'error': str(e)
+            }
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
+
+    
+    
+
+
+
+
+
 # В С П О М О Г А Т Е Л Ь Н Ы Е
 
-    def handle_register(self, login, user_id, server_url): #РАБОТАЕТ обновление таблицы маленького сервера при добавлении к нему поьзователя
+    def handle_register(self, login, user_id, server_url): #обновление таблицы маленького сервера при добавлении к нему поьзователя, 
+        #нужна чтобы пользователь создавал проекты и задачи на своем сервере а не пытался цеплятся к чужому
         connect = None
         cursor = None
         try:
@@ -618,32 +560,52 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             }
 
     
-    def get_info(self, login):
+    def get_info(self, login): # собирает всю информацию для пользователя (используется при синхронизации при входе и для кнопки обновить)
         connect = None
         cursor = None
         try:
             connect = connecting_to_database()
             cursor = connect.cursor()
 
-            # Получаем список задач для данного user_id
+            #все задачи пользователя
             cursor.execute("SELECT task_id, task_name, task_text FROM tasks WHERE owner = %s", (login,))
             list_of_tasks = cursor.fetchall()
 
-            # Получаем список проектов для данного user_id
+            #все проекты пользователя
             cursor.execute("SELECT project_id, project_name, project_text FROM projects WHERE owner = %s", (login,))
             list_of_projects = cursor.fetchall()
 
-            # Для каждого проекта получаем список подзадач
+            # для каждого проекта получаем список подзадач
             for i in range(len(list_of_projects)):
                 project_id = list_of_projects[i][0]  # Получаем project_id текущего проекта
                 cursor.execute("SELECT subtask_id, subtask_text, subtask_weight, status, number FROM subtasks WHERE project = %s", (project_id,))
+                cursor.execute("SELECT owner, subtask_id, subtask_text, subtask_weight, status, number FROM subtasks WHERE project = %s", (project_id,))
                 subtasks = cursor.fetchall() 
                 list_of_projects[i] = list_of_projects[i] + (subtasks,)  # Добавляем подзадачи к проекту
+            #получаем все приглашения для пользователя
+            cursor.execute("SELECT invitation_id, project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id FROM invitations WHERE target_login = %s", (login,))
+            invitations = cursor.fetchall()
+
+            #все работает на словарях
+            list_of_invitations = []
+            for invitation in invitations:
+                invitation_id, project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id = invitation
+                list_of_invitations.append({
+                    "invitation_id": invitation_id,
+                    "project_name": project_name,
+                    "project_text": project_text,
+                    "foreign_id": foreign_id,
+                    "subtask_text": subtask_text,
+                    "subtask_weight": subtask_weight,
+                    "owner_login": owner_login,
+                    "subtask_id": subtask_id
+                })
 
             return {
                 'message': 'List sended',
                 'list_of_tasks': list_of_tasks,
-                'list_of_projects': list_of_projects
+                'list_of_projects': list_of_projects,
+                'list_of_invitations': list_of_invitations
             }
         except Exception as e:
             logger.error(f"Error during getting info: {e}")
@@ -656,21 +618,84 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if connect:
                 connect.close()
 
+    def notify_owner_server(self, owner_login, foreign_id, subtask_text, status):# по внешнему идентификатору проекта(его идентификатор на изначальном сервере) и по логину 
+        #хозяина проекта отправляет запрос на смену статуса подзадачи, который обработается на сервере хозяине функцией смены статуса
+        try:
+            #выясняем сервер хозяина проекта
+            owner_server_url = self.get_user_server_url(owner_login)
+            if not owner_server_url:
+                logger.error(f"Owner server for {owner_login} not found.")
+                return {'error': 'Owner server not found'}
+            notification_data = {
+                "action": "update_subtask_status",
+                "project_id": foreign_id,
+                "subtask_text": subtask_text,
+                "status": status
+            }
+
+            #запрос
+            response = requests.post(owner_server_url, json=notification_data)
+            response.raise_for_status()
+            logger.debug(f"Notification sent to {owner_server_url} with data: {notification_data}")
+            return {'message': 'Notification sent successfully'}
+
+        except requests.RequestException as e:
+            logger.error(f"Error sending notification: {e}")
+            return {'error': str(e)}
+        
+    def get_invitations(self, login): #вспомогательная функция, формирует приглашение отправляя нужную пользователю информацию о нем, далее приглашение будет обработано вместе с задачами и проектами при обновлении
+        connect = None
+        cursor = None
+        try:
+            connect = connecting_to_database()
+            cursor = connect.cursor()
+            cursor.execute("SELECT invitation_id, project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id FROM invitations WHERE target_login = %s", (login,))
+            invitations = cursor.fetchall()
+
+            # создаем из найденной информации словарь чтобы отправить его пользователю
+            list_of_invitations = []
+            for invitation in invitations:
+                invitation_id, project_name, project_text, foreign_id, subtask_text, subtask_weight, owner_login, subtask_id = invitation
+                list_of_invitations.append({
+                    "invitation_id": invitation_id,
+                    "project_name": project_name,
+                    "project_text": project_text,
+                    "foreign_id": foreign_id,
+                    "subtask_text": subtask_text,
+                    "subtask_weight": subtask_weight,
+                    "owner_login": owner_login,
+                    "subtask_id": subtask_id
+                })
+            print(list_of_invitations)
+            return {
+                'message': 'Invitations sended',
+                'list_of_invitations': list_of_invitations
+            }
+        except Exception as e:
+            logger.error(f"Error retrieving list of invitations: {e}")
+            return {
+                'error': str(e)
+            }
+        finally:
+            if cursor:
+                cursor.close()
+            if connect:
+                connect.close()
+
     
 
-    def get_user_server_url(self, target_login):
+    def get_user_server_url(self, target_login): #функция для поиска url сервера к которому прикреплен пользователь, используется при работе с приглашениями
         try:
-            central_server_url = "http://127.0.0.1:8080"
+            central_server_url = "http://127.0.0.1:8080" #url распределяющего сервера
 
-            # Отправляем запрос на поиск URL, куда отправлять
             response = requests.post(central_server_url, json={"action": "user_info", "target_login": target_login})
             response.raise_for_status()
 
-            # Получаем адрес сервера пользователя
+            # получаем url сервера пользователя
             user_info = response.json()
             if user_info.get('message') == 'User info sended':
                 if 'list_of_users' in user_info and len(user_info['list_of_users']) > 0:
-                    # Проверяем, что элемент списка — это словарь
+                    # словарь словарь
                     if isinstance(user_info['list_of_users'][0], dict):
                         return user_info['list_of_users'][0]['server_url']
                     else:
